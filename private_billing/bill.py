@@ -1,10 +1,12 @@
 from dataclasses import dataclass
+
+from private_billing.utils import vector
 from .cycle import CycleContext
 
 @dataclass
 class Bill:
-    bill: list[float]
-    reward: list[float]
+    bill: vector[float]
+    reward: vector[float]
 
     def check_validity(self, cyc: CycleContext) -> None:
         assert len(self.bill) == cyc.cycle_length

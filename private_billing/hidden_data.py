@@ -1,9 +1,9 @@
 from __future__ import annotations
-from openfhe import Ciphertext, CryptoContext
+from openfhe import Ciphertext
+from private_billing.hiding import PublicHidingContext
 from .hidden_bill import HiddenBill
 from .cycle import CycleContext, CycleID, SharedCycleData, ClientID
-from .utils import max_list
-from .ckks_utils import invert_flags, mult_with_scalar
+from .utils import max_vector, vector
 from dataclasses import dataclass
 
 
@@ -16,42 +16,45 @@ class HiddenData:
     :param supplies: Encrypted supply, per timeslot
     :param accepted_flags: Flags indicating timeslots for which peer-to-peer trading was accepted.
     :param positive_deviation_flags: Flags indicating timeslots with negative deviation
-    :param masked_deviations: Deviation information, masked
+    :param masked_individual_deviations: Deviation information, masked
     :param masked_p2p_consumer_flags: Flag indicating timeslots in which this user was a p2p consumer, masked.
     :param masked_p2p_producer_flags: Flag indicating timeslots in which this user was a p2p producer, masked.
-    :param cc: Cryptographic context under which the information is encrypted
+    :param phc: context under which the information is encrypted/hidden
     """
+
     client: ClientID
     cycle_id: CycleID
     consumptions: Ciphertext
     supplies: Ciphertext
     accepted_flags: Ciphertext
     positive_deviation_flags: Ciphertext
-    masked_deviations: list[float]
-    masked_p2p_consumer_flags: list[float]
-    masked_p2p_producer_flags: list[float]
-    cc: CryptoContext
+    masked_individual_deviations: vector[float]
+    masked_p2p_consumer_flags: vector[float]
+    masked_p2p_producer_flags: vector[float]
+    phc: PublicHidingContext
 
     def check_validity(self, cyc: CycleContext) -> bool:
         # Check all encrypted data is correct
         # TODO
 
         # Check all masked data is correct
-        assert len(self.masked_deviations) == cyc.cycle_length
+        assert len(self.masked_individual_deviations) == cyc.cycle_length
         assert len(self.masked_p2p_consumer_flags) == cyc.cycle_length
         assert len(self.masked_p2p_producer_flags) == cyc.cycle_length
 
     @staticmethod
     def unmask_data(cycle_data: list[HiddenData]) -> SharedCycleData:
-        deviations, consumer_flags, producer_flags = [], [], []
-        for datum in cycle_data:
-            deviations.append(datum.masked_deviations)
-            consumer_flags.append(datum.masked_p2p_consumer_flags)
-            producer_flags.append(datum.masked_p2p_producer_flags)
+        vec_len = len(cycle_data[0].masked_individual_deviations)
+        total_deviations = vector.new(vec_len)
+        consumer_counts = vector.new(vec_len)
+        producer_counts = vector.new(vec_len)
 
-        return SharedCycleData(
-            sum(deviations), sum(consumer_flags), sum(producer_flags)
-        )
+        for datum in cycle_data:
+            total_deviations += datum.masked_individual_deviations
+            consumer_counts += datum.masked_p2p_consumer_flags
+            producer_counts += datum.masked_p2p_producer_flags
+
+        return SharedCycleData(total_deviations, consumer_counts, producer_counts)
 
     def compute_hidden_bill(
         self, scd: SharedCycleData, cyc: CycleContext
@@ -63,23 +66,23 @@ class HiddenData:
         # if for a given timeslot either count is 0, the positive_deviation_flags and negative_deviation_flags at that
         # timeslot for all consumers/producers must be 0 too in this scenario, these total_ values do not contribute
         # to any bill/reward.
-        total_p2p_consumers = max_list(scd.total_p2p_consumers, 1.0)
-        total_p2p_producers = max_list(scd.total_p2p_producers, 1.0)
+        total_p2p_consumers = max_vector(scd.total_p2p_consumers, 1.0)
+        total_p2p_producers = max_vector(scd.total_p2p_producers, 1.0)
 
         # Create rejected a dual to the accepted mask
-        rejected_flags = invert_flags(self.accepted_flags, self.cc)
+        rejected_flags = self.phc.invert_flags(self.accepted_flags)
 
         # CASE: Client not accepted for P2P trading
         #  -> pay retail price for the consumption
         #  -> get feed-in tarif for the production
-        bill_no_p2p = mult_with_scalar(self.consumptions, cyc.retail_prices, self.cc)
-        bill_no_p2p = self.cc.EvalMult(bill_no_p2p, rejected_flags)
-        reward_no_p2p = mult_with_scalar(self.supplies, cyc.feed_in_tarifs, self.cc)
-        reward_no_p2p = self.cc.EvalMult(reward_no_p2p, rejected_flags)
+        bill_no_p2p = self.phc.mult_with_scalar(self.consumptions, cyc.retail_prices)
+        bill_no_p2p = self.phc.multiply_ciphertexts(bill_no_p2p, rejected_flags)
+        reward_no_p2p = self.phc.mult_with_scalar(self.supplies, cyc.feed_in_tarifs)
+        reward_no_p2p = self.phc.multiply_ciphertexts(reward_no_p2p, rejected_flags)
 
         # CASE: Client was accepted for P2P trading
-        base_bill = mult_with_scalar(self.consumptions, cyc.trading_prices, self.cc)
-        base_reward = mult_with_scalar(self.supplies, cyc.trading_prices, self.cc)
+        base_bill = self.phc.mult_with_scalar(self.consumptions, cyc.trading_prices)
+        base_reward = self.phc.mult_with_scalar(self.supplies, cyc.trading_prices)
 
         # CASE: total deviation = 0
         # consumer get their base_bill
@@ -100,14 +103,16 @@ class HiddenData:
         #      = baseBill + TD / nr_p2p_consumers * (retail_price - trading price)
         # hence,
         # supplement = TD / nr_p2p_consumers * (retail_price - trading price)
+
+        # some testing
         bill_supplement = (
             (cyc.retail_prices - cyc.trading_prices) / total_p2p_consumers
         ) * scd.total_deviations
-        bill_supplement_ct = mult_with_scalar(
-            self.positive_deviation_flags, bill_supplement, self.cc
+        bill_supplement_ct = self.phc.mult_with_scalar(
+            self.positive_deviation_flags, bill_supplement
         )
-        bill_supplement_ct = mult_with_scalar(
-            bill_supplement_ct, scd.negative_total_deviation_flags, self.cc
+        bill_supplement_ct = self.phc.mult_with_scalar(
+            bill_supplement_ct, scd.negative_total_deviation_flags
         )
 
         # CASE: TD > 0
@@ -130,19 +135,19 @@ class HiddenData:
         reward_penalty = (
             (cyc.feed_in_tarifs - cyc.trading_prices) / total_p2p_producers
         ) * scd.total_deviations
-        reward_penalty_ct = mult_with_scalar(
-            self.positive_deviation_flags, reward_penalty, self.cc
+        reward_penalty_ct = self.phc.mult_with_scalar(
+            self.positive_deviation_flags, reward_penalty
         )
-        reward_penalty_ct = mult_with_scalar(
-            reward_penalty_ct, scd.positive_total_deviation_flags, self.cc
+        reward_penalty_ct = self.phc.mult_with_scalar(
+            reward_penalty_ct, scd.positive_total_deviation_flags
         )
 
         # Aggregating the P2P cases
         bill_p2p = base_bill + bill_supplement_ct
-        bill_p2p = self.cc.EvalMult(bill_p2p, self.accepted_flags)
+        bill_p2p = self.phc.multiply_ciphertexts(bill_p2p, self.accepted_flags)
 
         reward_p2p = base_reward + reward_penalty_ct
-        reward_p2p = self.cc.EvalMult(reward_p2p, self.accepted_flags)
+        reward_p2p = self.phc.multiply_ciphertexts(reward_p2p, self.accepted_flags)
 
         # Aggregating P2P and no-P2P cases
         bill = bill_p2p + bill_no_p2p

@@ -4,11 +4,11 @@ from .data import HiddenData
 
 
 class SharedBilling:
-    
+
     def __init__(self) -> None:
-        self.client_data: dict[CycleID, dict[ClientID, HiddenData]] = dict()
-        self.cycle_contexts: dict[CycleID, CycleContext] = dict()
-        self.clients: set = {}
+        self.client_data: dict[CycleID, dict[ClientID, HiddenData]] = {}
+        self.cycle_contexts: dict[CycleID, CycleContext] = {}
+        self.clients: set = set()
 
     def record_data(self, data: HiddenData, c: ClientID) -> None:
         self.client_data.setdefault(data.cycle_id, {})
@@ -29,12 +29,13 @@ class SharedBilling:
         # Gather data for the specified cycle
         cycle_data = self.client_data[cid]
         cyc = self.cycle_contexts[cid]
-        
+
         # Compute the shared cycle data
-        scd = HiddenData.unmask_data(cycle_data.values())
-        
+        scd = HiddenData.unmask_data(list(cycle_data.values()))
+        scd.check_validity(cyc)
+
         bills = {}
         for c, data in cycle_data.items():
             bills[c] = data.compute_hidden_bill(scd, cyc)
-        
+
         return bills

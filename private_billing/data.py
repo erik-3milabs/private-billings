@@ -2,7 +2,7 @@ from __future__ import annotations
 from .hidden_data import HiddenData
 from .cycle import CycleContext, CycleID, ClientID
 from .hiding import HidingContext
-from .utils import Flag, get_positive_flags, mulp_lists
+from .utils import Flag, get_positive_flags, mulp_lists, vector
 from dataclasses import dataclass
 
 
@@ -10,44 +10,12 @@ from dataclasses import dataclass
 class Data:
     client: ClientID
     cycle_id: CycleID
-    consumptions: list[float]
-    supplies: list[float]
-    consumption_promise: list[float]
-    supply_promise: list[float]
-    accepted_flags: list[Flag]
+    consumptions: vector[float]
+    supplies: vector[float]
+    consumption_promise: vector[float]
+    supply_promise: vector[float]
+    accepted_flags: vector[Flag]
     
-    def get_deviations(self) -> list[float]:
-        """
-        Compute deviations.
-        
-        Deviations are only relevant when client is accepted for trading
-        in a timeslot. Therefore, it is computed as zero otherwise.
-        
-        Deviation is computed as the supply deviation minus the consumption
-        deviation.        
-        """
-        supply_deviations = [
-            s - p 
-            for s, p in zip(self.supplies, self.supply_promise)
-        ]
-        consumption_deviations = [
-            c - p 
-            for c, p in zip(self.consumptions, self.consumption_promise)
-        ]
-        
-        # supply deviation - consumption deviation
-        deviations = [
-            s - c
-            for s, c in zip(supply_deviations, consumption_deviations)
-        ]
-        
-        # set deviation to zero in timeslots where trading is not accepted.
-        deviations = [
-            d if accepted else 0
-            for d, accepted in zip(deviations, self.accepted_flags)
-        ]
-        return deviations
-
     def hide(self, hc: HidingContext) -> HiddenData:
         """
         Hide the data in this object.
@@ -61,7 +29,7 @@ class Data:
         p2p_productions = mulp_lists(self.supplies, self.accepted_flags)
         p2p_producer_flags = get_positive_flags(p2p_productions)
 
-        positive_deviation_flags = get_positive_flags(self.get_deviations())
+        positive_deviation_flags = self.get_positive_deviation_flags()
 
         return HiddenData(
             self.client,
@@ -70,10 +38,10 @@ class Data:
             hc.encrypt(self.supplies),
             hc.encrypt(self.accepted_flags),
             hc.encrypt(positive_deviation_flags),
-            hc.mask(self.get_deviations(), 0),
+            hc.mask(self.get_individual_deviations(), 0),
             hc.mask(p2p_consumer_flags, 1),
             hc.mask(p2p_producer_flags, 2),
-            hc.cc,
+            hc.get_public_hiding_context(),
         )
     
     def check_validity(self, cyc: CycleContext) -> None:
@@ -91,3 +59,37 @@ class Data:
         assert len(self.consumption_promise) == cyc.cycle_length
         assert len(self.supply_promise) == cyc.cycle_length
         assert len(self.accepted_flags) == cyc.cycle_length
+        
+        # Check either production or consumption is zero; 
+        # cannot both be non-zero
+        for p, c in zip(self.supplies, self.consumptions):
+            assert p == 0 or c == 0
+
+    
+    def get_individual_deviations(self) -> vector[float]:
+        """
+        Compute individual deviations.
+        
+        Deviations are only relevant when client is accepted for trading
+        in a timeslot. Therefore, it is computed as zero otherwise.
+        
+        Deviation is computed as the supply deviation minus the consumption
+        deviation.        
+        """
+        supply_deviations = self.supplies - self.supply_promise
+        consumption_deviations = self.consumptions - self.consumption_promise
+        individual_deviations = supply_deviations - consumption_deviations
+        
+        # set deviation to zero in timeslots where trading is not accepted.
+        individual_deviations *= self.accepted_flags
+        
+        return vector(individual_deviations)    
+    
+
+    def get_positive_deviation_flags(self) -> vector[float]:
+        """
+        Compute positive deviation flags.
+        """
+        supply_deviations = self.supplies - self.supply_promise
+        consumption_deviations = self.consumptions - self.consumption_promise
+        return get_positive_flags(supply_deviations + consumption_deviations)
