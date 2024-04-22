@@ -1,0 +1,16 @@
+from dataclasses import dataclass
+from .cycle import CycleContext
+
+@dataclass
+class Bill:
+    bill: list[float]
+    reward: list[float]
+
+    def check_validity(self, cyc: CycleContext) -> None:
+        assert len(self.bill) == cyc.cycle_length
+        assert len(self.reward) == cyc.cycle_length
+
+    @property
+    def total(self) -> float:
+        return sum(self.bill) - sum(self.reward)
+    
