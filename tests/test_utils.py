@@ -113,4 +113,4 @@ class MockedPublicHidingContext(PublicHidingContext):
 
 
 def get_mock_public_hiding_context():
-    return MockedPublicHidingContext("cc", "pk")
+    return MockedPublicHidingContext("cyc", "cc", "pk")
