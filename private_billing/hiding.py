@@ -1,5 +1,7 @@
 from __future__ import annotations
+import pickle
 
+from private_billing.serialize import Serializible, deserialize_cryptocontext, deserialize_publickey, serialize_fhe_obj
 from private_billing.utils import vector
 from .cycle import CycleContext
 from .masking import SharedMaskGenerator
@@ -124,7 +126,7 @@ class HidingContext:
         return keys
 
 
-class PublicHidingContext(HidingContext):
+class PublicHidingContext(HidingContext, Serializible):
     def __init__(self, cyc: CycleContext, cc: CryptoContext, pk: PublicKey) -> None:
         self.cyc = cyc
         self.cc = cc
@@ -146,3 +148,15 @@ class PublicHidingContext(HidingContext):
 
     def _generate_key_pair(self) -> KeyPair:
         raise NotImplementedError("not implemented for public")
+
+    def serialize(self) -> bytes:
+        cc = serialize_fhe_obj(self.cc)
+        pk = serialize_fhe_obj(self._public_key)
+        return pickle.dumps({"cyc": self.cyc, "cc": cc, "pk": pk})
+
+    @staticmethod
+    def deserialize(serialization: bytes) -> PublicHidingContext:
+        obj = pickle.loads(serialization)
+        cc = deserialize_cryptocontext(obj["cc"])
+        pk = deserialize_publickey(obj["pk"])
+        return PublicHidingContext(obj["cyc"], cc, pk)

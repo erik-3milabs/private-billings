@@ -1,6 +1,7 @@
 from __future__ import annotations
 from openfhe import Ciphertext
 from private_billing.hiding import PublicHidingContext
+from private_billing.serialize import Serializible
 from .hidden_bill import HiddenBill
 from .cycle import CycleContext, CycleID, SharedCycleData, ClientID
 from .utils import max_vector, vector
@@ -8,7 +9,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class HiddenData:
+class HiddenData(Serializible):
     """
     :param client: id of client owning this data
     :param cycle_id: id of cycle to which this data belongs

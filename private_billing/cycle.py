@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from private_billing.serialize import Serializible
 from .utils import vector
 
 CycleID = int
@@ -6,7 +7,7 @@ ClientID = int
 
 
 @dataclass
-class CycleContext:
+class CycleContext(Serializible):
     cycle_id: CycleID
     cycle_length: int
     retail_prices: vector[float]
