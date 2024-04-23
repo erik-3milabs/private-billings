@@ -14,6 +14,7 @@ class HiddenBill:
         reward = hc.decrypt(self.hidden_reward)
 
         # remove noise
-        # TODO
+        bill = [round(b, 5) for b in bill]
+        reward = [round(r, 5) for r in reward]
 
         return Bill(bill, reward)

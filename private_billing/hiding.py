@@ -9,8 +9,11 @@ from openfhe import (
     CryptoContext,
     GenCryptoContext,
     KeyPair,
+    KeySwitchTechnique,
     PKESchemeFeature,
     PublicKey,
+    ScalingTechnique,
+    SecretKeyDist
 )
 
 
@@ -32,7 +35,7 @@ class HidingContext:
         return self._key_pair.secretKey
 
     def get_public_hiding_context(self) -> PublicHidingContext:
-        return PublicHidingContext(self.cc, self.public_key)
+        return PublicHidingContext(self.cyc, self.cc, self.public_key)
 
     def mask(self, values: vector[float], iv: int) -> vector[float]:
         """
@@ -43,8 +46,7 @@ class HidingContext:
         :returns: masked values
         """
         masks = self.mask_generator.generate_masks(iv, len(values))
-        masked = vector([a + b for a, b in zip(values, masks)])
-        return masked
+        return values + masks
 
     def encrypt(self, values: vector[float]) -> Ciphertext:
         """Encrypt a list of values"""
@@ -53,9 +55,9 @@ class HidingContext:
 
     def decrypt(self, values: Ciphertext) -> vector[float]:
         """Decrypt a ciphertext to a list of values."""
-        result = self.cc.Decrypt(values, self.secret_key)  # decrypt
+        result = self.cc.Decrypt(values, self._secret_key)  # decrypt
         result.SetLength(self.cyc.cycle_length)  # unpack
-        return vector(result)
+        return vector(result.GetRealPackedValue())
 
     def invert_flags(self, vals: Ciphertext) -> Ciphertext:
         """
@@ -64,7 +66,7 @@ class HidingContext:
         :param vals: flags to invert
         :return: inverted flag list
         """
-        ones = [1] * self.cc.GetEncodingParams().GetBatchSize()
+        ones = [1] * self.cyc.cycle_length
         ptxt_ones = self.cc.MakeCKKSPackedPlaintext(ones)  # pack
         return self.cc.EvalSub(ptxt_ones, vals)
 
@@ -84,14 +86,25 @@ class HidingContext:
         self, ctxt_1: Ciphertext, ctxt_2: Ciphertext
     ) -> Ciphertext:
         """Multiply ciphertexts"""
-        self.cc.EvalMult(ctxt_1, ctxt_2)
+        return self.cc.EvalMult(ctxt_1, ctxt_2)
 
     def _generate_crypto_context(self, cyc: CycleContext) -> CryptoContext:
         """Generate the cryptographic context used in this context."""
+        dcrtBits = 55
+        firstMod = 59
+        
         parameters = CCParamsCKKSRNS()
-        parameters.SetMultiplicativeDepth(2)
-        parameters.SetScalingModSize(50)
+        parameters.SetScalingModSize(dcrtBits)
+        parameters.SetScalingTechnique(ScalingTechnique.FLEXIBLEAUTO)
+        parameters.SetFirstModSize(firstMod)
+        parameters.SetSecretKeyDist(SecretKeyDist.UNIFORM_TERNARY)
+        
+        parameters.SetRingDim(1 << 14)
         parameters.SetBatchSize(cyc.cycle_length)
+        
+        parameters.SetNumLargeDigits(4)
+        parameters.SetKeySwitchTechnique(KeySwitchTechnique.HYBRID)
+        parameters.SetMultiplicativeDepth(3)
 
         cc = GenCryptoContext(parameters)
 
@@ -112,7 +125,8 @@ class HidingContext:
 
 
 class PublicHidingContext(HidingContext):
-    def __init__(self, cc: CryptoContext, pk: PublicKey) -> None:
+    def __init__(self, cyc: CycleContext, cc: CryptoContext, pk: PublicKey) -> None:
+        self.cyc = cyc
         self.cc = cc
         self._public_key = pk
 

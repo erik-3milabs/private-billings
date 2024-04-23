@@ -11,3 +11,9 @@ def test_removes_extra():
     
     val = conv.convert_from_int64(1_1000_0000)
     assert val == 1000.0000
+
+def test_maintains_sign():
+    conv = Int64ToFloatConvertor(4, 4)
+    
+    val = conv.convert_from_int64(-1000_0000)
+    assert val == -1000

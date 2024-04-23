@@ -31,13 +31,13 @@ class TestVector:
         assert v1 * v2 == vector([4, 10, 18])
 
 
-class TestConverter(Int64Convertor):
+class TestConvertor(Int64Convertor):
     def convert_from_int64(self, val: int):
         return val
 
 
-def get_test_converter():
-    return TestConverter()
+def get_test_convertor():
+    return TestConvertor()
 
 
 def get_test_cycle_context(id, length: int):
@@ -51,7 +51,7 @@ def get_test_cycle_context(id, length: int):
 
 
 def get_test_mask_generator():
-    conv = get_test_converter()
+    conv = get_test_convertor()
     return SharedMaskGenerator(conv)
 
 
@@ -87,7 +87,7 @@ class MockedHidingContext(HidingContext):
         return [v - 1 for v in values]
 
     def get_public_hiding_context(self):
-        return MockedPublicHidingContext("cc", "pk")
+        return MockedPublicHidingContext("cyc", "cc", "pk")
 
 
 def get_mock_hiding_context():
