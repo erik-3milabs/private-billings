@@ -1,6 +1,5 @@
 import pytest
-from private_billing import Data
-from private_billing.utils import vector
+from private_billing import Data, vector
 from .test_utils import get_test_cycle_context, get_mock_hiding_context
 
 
@@ -21,7 +20,7 @@ class TestDataValidity:
         )
 
         d.check_validity(cyc)
-        
+
     def test_check_validity_both_consumption_and_supply(self):
         cycle_length = 1024
         cyc = get_test_cycle_context(1, cycle_length)
@@ -149,7 +148,9 @@ class TestDataHide:
         assert hd.supplies == [s + 1 for s in d.supplies]
         assert hd.accepted_flags == [f + 1 for f in d.accepted_flags]
         assert hd.positive_deviation_flags == [f + 1 for f in positive_deviations]
-        assert hd.masked_individual_deviations == [d + 0 for d in d.get_individual_deviations()]
+        assert hd.masked_individual_deviations == [
+            d + 0 for d in d.get_individual_deviations()
+        ]
         assert hd.masked_p2p_consumer_flags == [f + 1 for f in consumer_flags]
         assert hd.masked_p2p_producer_flags == [f + 2 for f in producer_flags]
         assert hd.phc == mhc.get_public_hiding_context()

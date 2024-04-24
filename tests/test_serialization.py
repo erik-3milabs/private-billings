@@ -1,14 +1,17 @@
-from private_billing.cycle import CycleContext
-from private_billing.hidden_bill import HiddenBill
-from private_billing.hidden_data import HiddenData
-from private_billing.hiding import HidingContext, PublicHidingContext
-from private_billing.utils import vector
+from private_billing import (
+    CycleContext,
+    HiddenBill,
+    HiddenData,
+    HidingContext,
+    PublicHidingContext,
+    vector,
+)
 from tests.test_utils import get_mock_public_hiding_context
 
 
 class TestHiddenDataSerialization:
 
-    def test_plain(self):
+    def test_hidden_data_serialization(self):
         cyc_length = 1024
         hd = HiddenData(
             0,
@@ -43,7 +46,7 @@ class TestHiddenDataSerialization:
 
 class TestPublicHidingContextSerialization:
 
-    def test(self):
+    def test_public_hiding_context_serialization(self):
         cycle_length = 1024
         cyc = CycleContext(
             0,
@@ -77,7 +80,7 @@ class TestPublicHidingContextSerialization:
 
 class TestHiddenBillSerialization:
 
-    def test(self):
+    def test_hidden_bill_serialization(self):
         cycle_length = 1024
         cyc = CycleContext(
             0,
@@ -108,7 +111,7 @@ class TestHiddenBillSerialization:
 
 class TestCycleContextSerialization:
 
-    def test(self):
+    def test_cycle_context_serialization(self):
         cycle_length = 1024
         cyc = CycleContext(
             0,

@@ -65,17 +65,20 @@ class vector(list):
         elif isinstance(o, (float, int)):
             return vector([a % o for a in self])
         return super().__mod__(o)
-    
+
     def __imod__(self, o):
         return self % o
 
+
 T = TypeVar("T")
+
 
 def vec_sum(vals: list[vector[T]]) -> vector[T]:
     base = vector.new(len(vals[0]))
     for v in vals:
         base += v
     return base
+
 
 def max_vector(vals: vector[T], o: T) -> vector[T]:
     """For a vector, compute for each element the max between it and `o`."""
@@ -88,6 +91,7 @@ def mulp_lists(v1: list[T], v2: list[T]) -> list[T]:
     Assumes `v1` and `v2` have the same length.
     """
     return [a * b for a, b in zip(v1, v2)]
+
 
 def get_positive_flags(vals: vector[T]) -> vector[Flag]:
     """Generate a series of flags indicating all positive entries in `vals`."""

@@ -1,8 +1,6 @@
 import itertools
 import pytest
-from private_billing import SharedMaskGenerator, ClientID
-from private_billing.masking import Int64ToFloatConvertor
-from private_billing.utils import vector
+from private_billing import SharedMaskGenerator, ClientID, Int64ToFloatConvertor, vector
 from .test_utils import get_test_convertor
 
 
@@ -51,34 +49,25 @@ class TestSharedMaskGenerator:
         assert val1 != val2
 
     def test_shares_sum_to_zero(self):
-        gg = self.get_generator_group()
-        
         iv = 42
-        masks = [
-            g.generate_mask(iv)
-            for g in gg.values()
-        ]
-        
+        gg = self.get_generator_group()
+        masks = [g.generate_mask(iv) for g in gg.values()]
         assert sum(masks) == 0
-        
+
     def test_share_vectors_sum_to_zero(self):
-        gg = self.get_generator_group()
-        
         iv = 42
-        
-        masks = [
-            g.generate_masks(iv, 1024)
-            for g in gg.values()
-        ]
-        
+        gg = self.get_generator_group()
+        masks = [g.generate_masks(iv, 1024) for g in gg.values()]
         assert sum(masks, vector.new(1024)) == vector.new(1024)
 
+
 class TestSharedMaskingAndConversion:
-    
+
     def get_generator_group(self) -> dict[ClientID, SharedMaskGenerator]:
         group_size = 10
         generator_map = {
-            id: SharedMaskGenerator(Int64ToFloatConvertor(4,4)) for id in range(group_size)
+            id: SharedMaskGenerator(Int64ToFloatConvertor(4, 4))
+            for id in range(group_size)
         }
 
         for (c1, g1), (c2, g2) in itertools.combinations(generator_map.items(), 2):
@@ -88,32 +77,12 @@ class TestSharedMaskingAndConversion:
             g2.consume_foreign_seed(s1, c1)
 
         return generator_map
-    
+
     def test_share_vectors_sum_to_zero(self):
-        
         gg = self.get_generator_group()
         g = gg[0]
-        
+
         iv = 42
-        masks = [
-            g.generate_masks(iv, 1024)
-            for g in gg.values()
-        ]
-        
+        masks = [g.generate_masks(iv, 1024) for g in gg.values()]
+
         assert g.unmask(masks) == vector.new(1024)
-        # gg = self.get_generator_group()
-        
-        # iv = 42
-        
-        # masks = [
-        #     g.generate_masks(iv, 1024)
-        #     for g in gg.values()
-        # ]
-        
-        # s = sum(masks, vector.new(1024))
-        # s = vector([round(x) for x in s])
-        
-        # m = next(iter(gg.values())).convertor.modulus
-        # s %= m
-        
-        # assert sum(masks, vector.new(1024)) == vector.new(1024)

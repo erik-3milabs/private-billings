@@ -1,13 +1,17 @@
-from private_billing.bill import Bill
-from private_billing.billing import SharedBilling
-from private_billing.cycle import ClientID, CycleContext
-from private_billing.data import Data
-from private_billing.hidden_bill import HiddenBill
-from private_billing.hidden_data import HiddenData
-from private_billing.hiding import HidingContext
-from private_billing.masking import Int64ToFloatConvertor, SharedMaskGenerator
-from private_billing.utils import Flag, vector
-from tests.test_utils import get_test_convertor
+from private_billing import (
+    Bill,
+    SharedBilling,
+    ClientID,
+    CycleContext,
+    Data,
+    HiddenBill,
+    HiddenData,
+    HidingContext,
+    Int64ToFloatConvertor,
+    SharedMaskGenerator,
+    Flag,
+    vector,
+)
 
 
 class TestIntegration:
@@ -22,11 +26,8 @@ class TestIntegration:
         )
 
     def get_mask_generators(self, client_ids):
-        conv = Int64ToFloatConvertor(4,4)
-        # conv = get_test_convertor()
-        generators = {
-            c: SharedMaskGenerator(conv) for c in client_ids
-        }
+        conv = Int64ToFloatConvertor(4, 4)
+        generators = {c: SharedMaskGenerator(conv) for c in client_ids}
 
         # Exchange seeds
         for c1, g1 in generators.items():
@@ -61,11 +62,6 @@ class TestIntegration:
                 supplies=vector([is_producer * i] * cyc.cycle_length),
                 supply_promise=vector(vector([is_producer * i] * cyc.cycle_length)),
                 accepted_flags=vector([1] * cyc.cycle_length),
-                # consumptions=vector([0] * cyc.cycle_length),
-                # consumption_promise=vector([0] * cyc.cycle_length),
-                # supplies=vector([0] * cyc.cycle_length),
-                # supply_promise=vector(vector([0] * cyc.cycle_length)),
-                # accepted_flags=vector([1] * cyc.cycle_length),
             )
 
         return data
@@ -123,7 +119,7 @@ class TestIntegration:
                 d.consumptions,
                 d.supplies,
                 total_deviations,
-                d.get_individual_deviations()
+                d.get_individual_deviations(),
             ):
                 if accepted:
                     if td == 0:
@@ -152,7 +148,7 @@ class TestIntegration:
             rewards = [r for (_, r) in results]
 
             bills[c] = Bill(bill, rewards)
-        
+
         return bills
 
     def check_bills(
@@ -168,7 +164,7 @@ class TestIntegration:
             else:
                 assert b.reward == eb.reward
 
-    def test(self):
+    def test_integration(self):
         cyc = self.get_cycle_context()
 
         # Create multiple clients
