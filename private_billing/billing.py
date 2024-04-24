@@ -39,3 +39,16 @@ class SharedBilling:
             bills[c] = data.compute_hidden_bill(scd, cyc)
 
         return bills
+
+    def is_ready(self, cid: CycleID) -> bool:
+        """
+        Whether it is possible to compute bills for a given cycle.
+
+        :param cid: id of cycle for which to check
+        :returns: whether it is possible.
+        """
+        is_ready = True
+        cycle_data = self.client_data.get(cid, {})
+        for c in self.clients:
+            is_ready &= c in cycle_data
+        return is_ready

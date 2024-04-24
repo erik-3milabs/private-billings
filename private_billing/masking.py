@@ -52,6 +52,7 @@ class Int64ToFloatConvertor(Int64Convertor):
         # x = cropped / self._divisor
         return cropped
 
+SEED = int
 
 # TODO: PRZS
 
@@ -63,10 +64,10 @@ class SharedMaskGenerator:
 
     def __init__(self, convertor: Int64Convertor) -> None:
         self.convertor = convertor
-        self.owned_seeds: dict[ClientID, int] = {}
-        self.foreign_seeds: dict[ClientID, int] = {}
+        self.owned_seeds: dict[ClientID, SEED] = {}
+        self.foreign_seeds: dict[ClientID, SEED] = {}
 
-    def get_seed_for_peer(self, c: ClientID) -> int:
+    def get_seed_for_peer(self, c: ClientID) -> SEED:
         seed = self._generate_random_seed()
         self.owned_seeds[c] = seed
         return seed
@@ -74,10 +75,10 @@ class SharedMaskGenerator:
     def has_seed_for_peer(self, c: ClientID) -> bool:
         return c in self.owned_seeds
 
-    def consume_foreign_seed(self, seed: int, c: ClientID) -> None:
+    def consume_foreign_seed(self, seed: SEED, c: ClientID) -> None:
         self.foreign_seeds[c] = seed
 
-    def generate_mask(self, iv: int) -> int:
+    def generate_mask(self, iv: int) -> float:
         assert self.owned_seeds or self.foreign_seeds
         mask = 0
 
@@ -93,7 +94,7 @@ class SharedMaskGenerator:
 
         return mask
 
-    def generate_masks(self, iv: int, size: int) -> vector[int]:
+    def generate_masks(self, iv: int, size: int) -> vector[float]:
         """
         Generate a list of masks
 
