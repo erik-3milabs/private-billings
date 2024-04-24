@@ -1,8 +1,12 @@
 from __future__ import annotations
 import pickle
-
-from private_billing.serialize import Serializible, deserialize_cryptocontext, deserialize_publickey, serialize_fhe_obj
-from private_billing.utils import vector
+from .serialize import (
+    Serializible,
+    deserialize_cryptocontext,
+    deserialize_publickey,
+    serialize_fhe_obj,
+)
+from .utils import vector
 from .cycle import CycleContext
 from .masking import SharedMaskGenerator
 from openfhe import (
@@ -15,7 +19,7 @@ from openfhe import (
     PKESchemeFeature,
     PublicKey,
     ScalingTechnique,
-    SecretKeyDist
+    SecretKeyDist,
 )
 
 
@@ -94,16 +98,16 @@ class HidingContext:
         """Generate the cryptographic context used in this context."""
         dcrtBits = 55
         firstMod = 59
-        
+
         parameters = CCParamsCKKSRNS()
         parameters.SetScalingModSize(dcrtBits)
         parameters.SetScalingTechnique(ScalingTechnique.FLEXIBLEAUTO)
         parameters.SetFirstModSize(firstMod)
         parameters.SetSecretKeyDist(SecretKeyDist.UNIFORM_TERNARY)
-        
+
         parameters.SetRingDim(1 << 14)
         parameters.SetBatchSize(cyc.cycle_length)
-        
+
         parameters.SetNumLargeDigits(4)
         parameters.SetKeySwitchTechnique(KeySwitchTechnique.HYBRID)
         parameters.SetMultiplicativeDepth(3)

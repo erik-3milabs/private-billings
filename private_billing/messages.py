@@ -1,10 +1,21 @@
+from __future__ import annotations
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
-from private_billing import ClientID, HiddenBill, HiddenData, SEED
-from private_billing.client import Target
-from private_billing.cycle import CycleContext
+from private_billing.core import ClientID, HiddenBill, HiddenData, SEED, CycleContext
+
+from dataclasses import dataclass
+from private_billing.core.cycle import ClientID
+
+
+@dataclass
+class Target:
+    id: ClientID
+    ip: int
+
+    def send(self, msg: Message) -> None:
+        pass
 
 
 class ValidationException(Exception):
@@ -97,16 +108,17 @@ class NewMemberMessage(Message):
 @dataclass
 class ContextMessage(Message):
     context: CycleContext
-    
+
     @property
     def type(self) -> MessageType:
         return MessageType.CYCLE_CONTEXT
-    
+
     def check_validity(self) -> None:
         try:
             assert isinstance(self.context, CycleContext)
         except AssertionError:
             raise ValidationException("Invalid context message.")
+
 
 @dataclass
 class DataMessage(Message):

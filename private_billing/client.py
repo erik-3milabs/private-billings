@@ -2,14 +2,14 @@ from dataclasses import dataclass
 import pickle
 from typing import Any, Callable, Dict
 
-from private_billing import (
+from private_billing.core import (
     CycleContext,
     Data,
     HidingContext,
     Int64ToFloatConvertor,
     SharedMaskGenerator,
 )
-from private_billing import Bill, ClientID, CycleID
+from private_billing.core import Bill, ClientID, CycleID
 from private_billing.messages import (
     BillMessage,
     DataMessage,
@@ -19,16 +19,8 @@ from private_billing.messages import (
     NewMemberMessage,
     SeedMessage,
     UserType,
+    Target
 )
-
-
-@dataclass
-class Target:
-    id: ClientID
-    ip: int
-
-    def send(self, msg: Message) -> None:
-        pass
 
 
 class Communicator:

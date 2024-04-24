@@ -1,11 +1,11 @@
-from private_billing import (
+from private_billing.core import (
     CycleContext,
     HidingContext,
     SharedMaskGenerator,
     Int64Convertor,
     PublicHidingContext,
+    vector
 )
-from private_billing.utils import vector
 
 
 class TestVector:

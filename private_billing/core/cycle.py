@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from private_billing.serialize import Serializible
+from .serialize import Serializible
 from .utils import vector
 
 CycleID = int

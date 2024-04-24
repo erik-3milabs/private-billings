@@ -1,7 +1,7 @@
 from typing import Dict, List
 import uuid
 from private_billing.client import Communicator, Target, Message, Target
-from private_billing import CycleContext, CycleID, ClientID
+from private_billing.core import CycleContext, CycleID, ClientID
 from private_billing.messages import ContextMessage, HelloMessage, NewMemberMessage, UserType, WelcomeMessage, MessageType
 
 class Operator:

@@ -1,4 +1,4 @@
-from private_billing import SharedBilling, ClientID, CycleID
+from private_billing.core import SharedBilling, ClientID, CycleID
 from private_billing.client import Communicator, Message, Target, Target
 from private_billing.messages import (
     DataMessage,

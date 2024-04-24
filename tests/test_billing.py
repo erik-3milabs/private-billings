@@ -1,4 +1,4 @@
-from private_billing import SharedBilling, HiddenData, vector
+from private_billing.core import SharedBilling, HiddenData, vector
 from tests.test_utils import MockedHidingContext, get_test_cycle_context
 
 

@@ -1,6 +1,5 @@
-from private_billing.utils import vec_sum, vector
+from .utils import vec_sum, vector
 from .cycle import ClientID
-
 from abc import ABC
 import math
 from numpy.random import PCG64
@@ -31,19 +30,19 @@ class Int64ToFloatConvertor(Int64Convertor):
 
     @property
     def modulus(self) -> int:
-        return 10 ** self.integer_size
+        return 10**self.integer_size
         # return pow(2, math.ceil(math.log2(10) * self.integer_size))
 
     @property
     def _divisor(self) -> int:
-        return 10 ** self.fractional_size
+        return 10**self.fractional_size
         # return pow(2, math.ceil(math.log2(10) * self.fractional_size))
 
     def convert_from_int64(self, val: int) -> float:
         """Convert an 64-bit int to a float"""
         # 'Shift' to desired format
         shifted = val / self._divisor
-        
+
         # Crop to desired size
         # Crop to desired size
         cropped = math.fmod(shifted, self.modulus)
@@ -51,6 +50,7 @@ class Int64ToFloatConvertor(Int64Convertor):
         # 'Shift' to the desired format
         # x = cropped / self._divisor
         return cropped
+
 
 SEED = int
 
@@ -71,7 +71,7 @@ class SharedMaskGenerator:
         seed = self._generate_random_seed()
         self.owned_seeds[c] = seed
         return seed
-    
+
     def has_seed_for_peer(self, c: ClientID) -> bool:
         return c in self.owned_seeds
 
@@ -120,7 +120,7 @@ class SharedMaskGenerator:
 
     def unmask(self, vals: list[vector]) -> vector:
         return vec_sum(vals)
-        
+
     def _convert_vector(self, vals: vector[int]) -> vector:
         return vector([self.convertor.convert_from_int64(v) for v in vals])
 

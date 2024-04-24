@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-
-from private_billing.utils import vector
+from .utils import vector
 from .cycle import CycleContext, CycleID
 
 @dataclass

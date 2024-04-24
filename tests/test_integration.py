@@ -1,4 +1,4 @@
-from private_billing import (
+from private_billing.core import (
     Bill,
     SharedBilling,
     ClientID,
@@ -147,7 +147,7 @@ class TestIntegration:
             bill = [b for (b, _) in results]
             rewards = [r for (_, r) in results]
 
-            bills[c] = Bill(bill, rewards)
+            bills[c] = Bill(cyc.cycle_id, bill, rewards)
 
         return bills
 

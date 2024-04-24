@@ -1,5 +1,5 @@
 import pytest
-from private_billing import Data, vector
+from private_billing.core import Data, vector
 from .test_utils import get_test_cycle_context, get_mock_hiding_context
 
 

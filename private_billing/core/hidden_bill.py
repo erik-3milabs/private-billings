@@ -1,9 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import pickle
-
-from private_billing.cycle import CycleID
-from private_billing.serialize import (
+from .cycle import CycleID
+from .serialize import (
     DeserializationOption,
     Serializible,
     deserialize_fhe,
@@ -34,11 +33,11 @@ class HiddenBill(Serializible):
     def serialize(self) -> bytes:
         hb = serialize_fhe_obj(self.hidden_bill)
         hr = serialize_fhe_obj(self.hidden_reward)
-        return pickle.dumps({"hb": hb, "hr": hr})
+        return pickle.dumps({"cycle_id": self.cycle_id, "hb": hb, "hr": hr})
 
     @staticmethod
     def deserialize(serialization: bytes) -> HiddenBill:
         obj = pickle.loads(serialization)
         hb = deserialize_fhe(obj["hb"], DeserializationOption.CIPHERTEXT)
         hr = deserialize_fhe(obj["hr"], DeserializationOption.CIPHERTEXT)
-        return HiddenBill(hb, hr)
+        return HiddenBill(obj["cycle_id"], hb, hr)

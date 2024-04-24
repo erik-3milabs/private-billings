@@ -1,4 +1,4 @@
-from private_billing import (
+from private_billing.core import (
     CycleContext,
     HiddenBill,
     HiddenData,
@@ -81,9 +81,9 @@ class TestPublicHidingContextSerialization:
 class TestHiddenBillSerialization:
 
     def test_hidden_bill_serialization(self):
-        cycle_length = 1024
+        cycle_id, cycle_length = 0, 1024
         cyc = CycleContext(
-            0,
+            cycle_id,
             cycle_length,
             vector([0.21] * cycle_length),
             vector([0.11] * cycle_length),
@@ -93,7 +93,7 @@ class TestHiddenBillSerialization:
 
         b, r = vector(list(range(1024))), vector(list(range(1024, 2048)))
         hb, hr = hc.encrypt(b), hc.encrypt(r)
-        bill = HiddenBill(hb, hr)
+        bill = HiddenBill(cycle_id, hb, hr)
 
         serialization = bill.serialize()
 
@@ -112,9 +112,9 @@ class TestHiddenBillSerialization:
 class TestCycleContextSerialization:
 
     def test_cycle_context_serialization(self):
-        cycle_length = 1024
+        cycle_id, cycle_length = 0, 1024
         cyc = CycleContext(
-            0,
+            cycle_id,
             cycle_length,
             vector([0.21] * cycle_length),
             vector([0.11] * cycle_length),
