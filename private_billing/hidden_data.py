@@ -154,4 +154,4 @@ class HiddenData(Serializible):
         bill = bill_p2p + bill_no_p2p
         reward = reward_p2p + reward_no_p2p
 
-        return HiddenBill(bill, reward)
+        return HiddenBill(self.cycle_id, bill, reward)

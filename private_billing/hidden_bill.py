@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import pickle
 
+from private_billing.cycle import CycleID
 from private_billing.serialize import (
     DeserializationOption,
     Serializible,
@@ -16,6 +17,7 @@ from openfhe import Ciphertext
 
 @dataclass
 class HiddenBill(Serializible):
+    cycle_id: CycleID
     hidden_bill: Ciphertext
     hidden_reward: Ciphertext
 
@@ -28,7 +30,7 @@ class HiddenBill(Serializible):
         bill = [round(b, 5) for b in bill]
         reward = [round(r, 5) for r in reward]
 
-        return Bill(bill, reward)
+        return Bill(self.cycle_id, bill, reward)
 
     def serialize(self) -> bytes:
         hb = serialize_fhe_obj(self.hidden_bill)
