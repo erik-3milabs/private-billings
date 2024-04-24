@@ -19,13 +19,16 @@ class Message:
     content: Dict
 
 
+@dataclass
 class Sender:
-    pass
+    id: int
+    ip: int
 
 
+@dataclass
 class Target:
-    def __init__(self):
-        pass
+    id: int
+    ip: int
 
     def send(self, msg: Message) -> None:
         pass
@@ -53,9 +56,10 @@ class Client:
         self.mg = SharedMaskGenerator(Int64ToFloatConvertor())
         self.hc: HidingContext = None
         self.context: Dict[int, CycleContext] = {}
+        self.billing_server: Target = None
 
         # Register with the market_operator
-        hello_msg = Message("hello", {})
+        hello_msg = Message("hello", {"type": "client"})
         self.communicator.send(hello_msg, market_operator)
 
     def _init_hiding_context(self, cyc: CycleContext) -> None:
@@ -66,19 +70,23 @@ class Client:
             "bill": self._receive_bill,
             "info": self._receive_context,
             "new_subscriber": self._new_subscriber,
+            "new_server": self._new_server,
             "seed": self._receive_seed,
             "welcome": self._welcome,
         }
-        call_back = call_backs.get(msg.type)
-        call_back(msg, sender)
+        try:
+            call_back = call_backs.get(msg.type)
+            call_back(msg, sender)
+        except IndexError:
+            print(f"Recieved message of unknown type `{msg.type}`.")
 
     def _welcome(self, msg: Message) -> None:
-        content: Welcome = msg.content
-        self.id = content.id
-        self.billing_server = content.billing_server
+        content = msg.content
+        self.id = content.get("id")
+        self.billing_server = content.get("billing_server")
 
         # Exchange seeds with registered peers
-        peers = content.peers
+        peers = content.get("peers")
         for peer in peers:
             self._include_peer(peer)
 
@@ -95,6 +103,14 @@ class Client:
         except KeyError:
             print("Received malformed 'new_subscribe' message.")
 
+    def _new_server(self, msg: Message) -> None:
+        content = msg.content
+        try:
+            billing_server = content.get("new_server")
+            self.billing_server = billing_server
+        except KeyError:
+            print("Received malformed 'new_server' message.")
+
     def _send_seed(self, peer) -> None:
         seed = self.mg.get_seed_for_peer(peer.id)
         msg = Message("seed", {"seed": seed})
@@ -108,10 +124,10 @@ class Client:
         except KeyError:
             print("Received malformed 'seed' message.")
 
-    def _receive_bill(self, type, call_back: Callable):
+    def _receive_bill(self, msg: Message, sender: Sender):
         pass
 
-    def _include_peer(self, peer: Peer) -> None:
+    def _include_peer(self, peer: Target) -> None:
         if self.mg.has_seed_for_peer(peer):
             return
         self._send_seed(peer)
