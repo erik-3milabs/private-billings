@@ -7,7 +7,6 @@ from private_billing.serialize import (
     DeserializationOption,
     Serializible,
     deserialize_fhe,
-    deserialize_ciphertext,
     serialize_fhe_obj,
 )
 from .bill import Bill
