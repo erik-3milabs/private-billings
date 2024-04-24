@@ -70,6 +70,9 @@ class SharedMaskGenerator:
         seed = self._generate_random_seed()
         self.owned_seeds[c] = seed
         return seed
+    
+    def has_seed_for_peer(self, c: ClientID) -> bool:
+        return c in self.owned_seeds
 
     def consume_foreign_seed(self, seed: int, c: ClientID) -> None:
         self.foreign_seeds[c] = seed
