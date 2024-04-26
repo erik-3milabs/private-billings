@@ -6,24 +6,26 @@ from private_billing.core import (
     PublicHidingContext,
     vector,
 )
-from tests.test_utils import get_mock_public_hiding_context
+from tests.test_utils import are_equal_ciphertexts
 
 
 class TestHiddenDataSerialization:
-
     def test_hidden_data_serialization(self):
+        cyc = CycleContext(0, 1024, [0]*1024, [0]*1024, [0]*1024)
+        hc = HidingContext(cyc, None)
+        
         cyc_length = 1024
         hd = HiddenData(
             0,
             1,
-            vector([1] * cyc_length),
-            vector([2] * cyc_length),
-            vector([3] * cyc_length),
-            vector([4] * cyc_length),
+            hc.encrypt(vector([1] * cyc_length)),
+            hc.encrypt(vector([2] * cyc_length)),
+            hc.encrypt(vector([3] * cyc_length)),
+            hc.encrypt(vector([4] * cyc_length)),
             vector([6] * cyc_length),
             vector([7] * cyc_length),
             vector([0] * cyc_length),
-            get_mock_public_hiding_context(),
+            hc.get_public_hiding_context(),
         )
 
         serialization = hd.serialize()
@@ -34,14 +36,25 @@ class TestHiddenDataSerialization:
 
         assert hd1.client == hd.client
         assert hd1.cycle_id == hd.cycle_id
-        assert hd1.consumptions == hd.consumptions
-        assert hd1.supplies == hd.supplies
-        assert hd1.accepted_flags == hd.accepted_flags
-        assert hd1.positive_deviation_flags == hd.positive_deviation_flags
+        assert are_equal_ciphertexts(hd1.consumptions, hd.consumptions, hc)
+        assert are_equal_ciphertexts(hd1.supplies, hd.supplies, hc)
+        assert are_equal_ciphertexts(hd1.accepted_flags, hd.accepted_flags, hc)
+        assert are_equal_ciphertexts(hd1.positive_deviation_flags, hd.positive_deviation_flags, hc)
         assert hd1.masked_individual_deviations == hd.masked_individual_deviations
         assert hd1.masked_p2p_consumer_flags == hd.masked_p2p_consumer_flags
         assert hd1.masked_p2p_producer_flags == hd.masked_p2p_producer_flags
-        assert hd1.phc == hd.phc
+        
+        # Test if phcs are the same
+        assert hd1.phc.cc == hd.phc.cc
+        assert hd1.phc.cyc == hd.phc.cyc
+        
+        # Test if public keys work the same
+        phc: PublicHidingContext = hd1.phc
+        pt = list(range(1024))
+        enc = phc.encrypt(pt)
+        dec = hc.decrypt(enc)
+        dec = [round(x) for x in dec]
+        assert dec == pt
 
 
 class TestPublicHidingContextSerialization:

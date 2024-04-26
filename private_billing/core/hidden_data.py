@@ -1,7 +1,8 @@
 from __future__ import annotations
+from typing import Any
 from openfhe import Ciphertext
 from .hiding import PublicHidingContext
-from .serialize import Serializible
+from .serialize import Serializible, deserialize_ciphertext, serialize_fhe_obj
 from .hidden_bill import HiddenBill
 from .cycle import CycleContext, CycleID, SharedCycleData, ClientID
 from .utils import max_vector, vector
@@ -155,3 +156,39 @@ class HiddenData(Serializible):
         reward = reward_p2p + reward_no_p2p
 
         return HiddenBill(self.cycle_id, bill, reward)
+
+    def __getstate__(self) -> dict[str, Any]:
+        """Prepare object for pickling, i.e., serialization."""
+        # Prepare object for serialization
+        self.__consumptions_serialized = serialize_fhe_obj(self.consumptions)
+        self.__supplies_serialized = serialize_fhe_obj(self.supplies)
+        self.__accepted_flags_serialized = serialize_fhe_obj(self.accepted_flags)
+        self.__positive_deviation_flags_serialized = serialize_fhe_obj(
+            self.positive_deviation_flags
+        )
+
+        # Disable unpickleable objects
+        attributes = self.__dict__.copy()
+        del attributes["consumptions"]
+        del attributes["supplies"]
+        del attributes["accepted_flags"]
+        del attributes["positive_deviation_flags"]
+        return attributes
+
+    def __setstate__(self, state):
+        """Rebuild object after unpickling, i.e., deserialization."""
+        self.__dict__ = state
+
+        # Rebuild objects
+        self.consumptions = deserialize_ciphertext(self.__consumptions_serialized)
+        self.supplies = deserialize_ciphertext(self.__supplies_serialized)
+        self.accepted_flags = deserialize_ciphertext(self.__accepted_flags_serialized)
+        self.positive_deviation_flags = deserialize_ciphertext(
+            self.__positive_deviation_flags_serialized
+        )
+
+        # Remove placeholders
+        del self.__consumptions_serialized
+        del self.__supplies_serialized
+        del self.__accepted_flags_serialized
+        del self.__positive_deviation_flags_serialized

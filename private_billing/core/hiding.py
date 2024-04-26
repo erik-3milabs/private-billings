@@ -1,5 +1,6 @@
 from __future__ import annotations
 import pickle
+from typing import Any
 from .serialize import (
     Serializible,
     deserialize_cryptocontext,
@@ -153,14 +154,26 @@ class PublicHidingContext(HidingContext, Serializible):
     def _generate_key_pair(self) -> KeyPair:
         raise NotImplementedError("not implemented for public")
 
-    def serialize(self) -> bytes:
-        cc = serialize_fhe_obj(self.cc)
-        pk = serialize_fhe_obj(self._public_key)
-        return pickle.dumps({"cyc": self.cyc, "cc": cc, "pk": pk})
+    def __getstate__(self) -> dict[str, Any]:
+        """Prepare object for pickling, i.e., serialization."""
+        # Prepare object for serialization
+        self.__cc_serialized = serialize_fhe_obj(self.cc)
+        self.__pk_serialized = serialize_fhe_obj(self._public_key)
 
-    @staticmethod
-    def deserialize(serialization: bytes) -> PublicHidingContext:
-        obj = pickle.loads(serialization)
-        cc = deserialize_cryptocontext(obj["cc"])
-        pk = deserialize_publickey(obj["pk"])
-        return PublicHidingContext(obj["cyc"], cc, pk)
+        # Disable unpickleable objects
+        attributes = self.__dict__.copy()
+        del attributes["cc"]
+        del attributes["_public_key"]
+        return attributes
+
+    def __setstate__(self, state):
+        """Rebuild object after unpickling, i.e., deserialization."""
+        self.__dict__ = state
+
+        # Rebuild objects
+        self.cc = deserialize_cryptocontext(self.__cc_serialized)
+        self._public_key = deserialize_publickey(self.__pk_serialized)
+        
+        # Remove placeholders
+        del self.__cc_serialized
+        del self.__pk_serialized

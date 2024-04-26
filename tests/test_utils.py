@@ -6,6 +6,7 @@ from private_billing.core import (
     PublicHidingContext,
     vector
 )
+from openfhe import Ciphertext
 
 
 class TestVector:
@@ -114,3 +115,18 @@ class MockedPublicHidingContext(PublicHidingContext):
 
 def get_mock_public_hiding_context():
     return MockedPublicHidingContext("cyc", "cc", "pk")
+
+
+ERROR = pow(10, -10)
+
+def are_equal_ciphertexts(c1: Ciphertext, c2:Ciphertext, hc: HidingContext) -> bool:
+    p1 = hc.decrypt(c1)
+    p2 = hc.decrypt(c2)
+    
+    if len(p1) != len(p2):
+        return False
+    
+    are_equal = True
+    for e1, e2 in zip(p1, p2):
+        are_equal &= abs(e1 - e2) < ERROR
+    return are_equal
