@@ -65,16 +65,16 @@ class HidingContext:
         result.SetLength(self.cyc.cycle_length)  # unpack
         return vector(result.GetRealPackedValue())
 
-    def invert_flags(self, vals: Ciphertext) -> Ciphertext:
+    def flip_bits(self, bits: Ciphertext) -> Ciphertext:
         """
-        Invert list of flags, i.e., values in the set {0, 1}
+        Flip encrypted bits
 
-        :param vals: flags to invert
-        :return: inverted flag list
+        :param bits: bits to flip
+        :return: flipped flags
         """
         ones = [1] * self.cyc.cycle_length
         ptxt_ones = self.cc.MakeCKKSPackedPlaintext(ones)  # pack
-        return self.cc.EvalSub(ptxt_ones, vals)
+        return self.cc.EvalSub(ptxt_ones, bits)
 
     def mult_with_scalar(self, ctxt: Ciphertext, scalars: vector[float]) -> Ciphertext:
         """

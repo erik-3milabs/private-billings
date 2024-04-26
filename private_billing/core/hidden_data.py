@@ -71,7 +71,7 @@ class HiddenData(Serializible):
         total_p2p_producers = max_vector(scd.total_p2p_producers, 1.0)
 
         # Create rejected a dual to the accepted mask
-        rejected_flags = self.phc.invert_flags(self.accepted_flags)
+        rejected_flags = self.phc.flip_bits(self.accepted_flags)
 
         # CASE: Client not accepted for P2P trading
         #  -> pay retail price for the consumption

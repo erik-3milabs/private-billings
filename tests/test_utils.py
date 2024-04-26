@@ -96,7 +96,7 @@ def get_mock_hiding_context():
 
 class MockedPublicHidingContext(PublicHidingContext):
 
-    def invert_flags(self, vals):
+    def flip_bits(self, vals):
         return vector([1 - v for v in vals])
 
     def encrypt(self, scalars: list[float], pk):
