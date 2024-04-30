@@ -27,9 +27,9 @@ from openfhe import (
 class HidingContext:
     """Context used to hide/encrypt data."""
 
-    def __init__(self, cyc: CycleContext, mask_generator: SharedMaskGenerator) -> None:
-        self.cyc = cyc
-        self.cc = self._generate_crypto_context(cyc)
+    def __init__(self, cycle_length: int, mask_generator: SharedMaskGenerator) -> None:
+        self.cycle_length = cycle_length
+        self.cc = self._generate_crypto_context(cycle_length)
         self._key_pair = self._generate_key_pair()
         self.mask_generator = mask_generator
 
@@ -42,7 +42,7 @@ class HidingContext:
         return self._key_pair.secretKey
 
     def get_public_hiding_context(self) -> PublicHidingContext:
-        return PublicHidingContext(self.cyc, self.cc, self.public_key)
+        return PublicHidingContext(self.cycle_length, self.cc, self.public_key)
 
     def mask(self, values: vector[float], iv: int) -> vector[float]:
         """
@@ -63,7 +63,7 @@ class HidingContext:
     def decrypt(self, values: Ciphertext) -> vector[float]:
         """Decrypt a ciphertext to a list of values."""
         result = self.cc.Decrypt(values, self._secret_key)  # decrypt
-        result.SetLength(self.cyc.cycle_length)  # unpack
+        result.SetLength(self.cycle_length)  # unpack
         return vector(result.GetRealPackedValue())
 
     def flip_bits(self, bits: Ciphertext) -> Ciphertext:
@@ -73,7 +73,7 @@ class HidingContext:
         :param bits: bits to flip
         :return: flipped flags
         """
-        ones = [1] * self.cyc.cycle_length
+        ones = [1] * self.cycle_length
         ptxt_ones = self.cc.MakeCKKSPackedPlaintext(ones)  # pack
         return self.cc.EvalSub(ptxt_ones, bits)
 
@@ -95,7 +95,7 @@ class HidingContext:
         """Multiply ciphertexts"""
         return self.cc.EvalMult(ctxt_1, ctxt_2)
 
-    def _generate_crypto_context(self, cyc: CycleContext) -> CryptoContext:
+    def _generate_crypto_context(self, cycle_length: int) -> CryptoContext:
         """Generate the cryptographic context used in this context."""
         dcrtBits = 55
         firstMod = 59
@@ -107,7 +107,7 @@ class HidingContext:
         parameters.SetSecretKeyDist(SecretKeyDist.UNIFORM_TERNARY)
 
         parameters.SetRingDim(1 << 14)
-        parameters.SetBatchSize(cyc.cycle_length)
+        parameters.SetBatchSize(cycle_length)
 
         parameters.SetNumLargeDigits(4)
         parameters.SetKeySwitchTechnique(KeySwitchTechnique.HYBRID)
@@ -132,8 +132,8 @@ class HidingContext:
 
 
 class PublicHidingContext(HidingContext, Serializible):
-    def __init__(self, cyc: CycleContext, cc: CryptoContext, pk: PublicKey) -> None:
-        self.cyc = cyc
+    def __init__(self, cycle_length: int, cc: CryptoContext, pk: PublicKey) -> None:
+        self.cycle_length = cycle_length
         self.cc = cc
         self._public_key = pk
 
@@ -148,7 +148,7 @@ class PublicHidingContext(HidingContext, Serializible):
     def decrypt(self, values: Ciphertext) -> list[float]:
         raise NotImplementedError("not implemented for public")
 
-    def _generate_crypto_context(self, cyc: CycleContext) -> CryptoContext:
+    def _generate_crypto_context(self, cycle_length: int) -> CryptoContext:
         raise NotImplementedError("not implemented for public")
 
     def _generate_key_pair(self) -> KeyPair:

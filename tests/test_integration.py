@@ -44,8 +44,8 @@ class TestIntegration:
 
         return generators
 
-    def generate_hiding_contexts(self, cyc, generators):
-        hcs = {c: HidingContext(cyc, g) for c, g in generators.items()}
+    def generate_hiding_contexts(self, cycle_length, generators):
+        hcs = {c: HidingContext(cycle_length, g) for c, g in generators.items()}
         return hcs
 
     def generate_data(self, client_ids, cyc: CycleContext):
@@ -170,7 +170,7 @@ class TestIntegration:
         # Create multiple clients
         client_ids = list(range(10))
         generators = self.get_mask_generators(client_ids)
-        hcs = self.generate_hiding_contexts(cyc, generators)
+        hcs = self.generate_hiding_contexts(cyc.cycle_length, generators)
 
         # Generate data
         client_data = self.generate_data(client_ids, cyc)

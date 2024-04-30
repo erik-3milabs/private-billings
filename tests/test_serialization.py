@@ -11,10 +11,9 @@ from tests.test_utils import are_equal_ciphertexts
 
 class TestHiddenDataSerialization:
     def test_hidden_data_serialization(self):
-        cyc = CycleContext(0, 1024, [0]*1024, [0]*1024, [0]*1024)
-        hc = HidingContext(cyc, None)
-        
         cyc_length = 1024
+        hc = HidingContext(cyc_length, None)
+        
         hd = HiddenData(
             0,
             1,
@@ -46,7 +45,7 @@ class TestHiddenDataSerialization:
         
         # Test if phcs are the same
         assert hd1.phc.cc == hd.phc.cc
-        assert hd1.phc.cyc == hd.phc.cyc
+        assert hd1.phc.cycle_length == hd.phc.cycle_length
         
         # Test if public keys work the same
         phc: PublicHidingContext = hd1.phc
@@ -61,14 +60,7 @@ class TestPublicHidingContextSerialization:
 
     def test_public_hiding_context_serialization(self):
         cycle_length = 1024
-        cyc = CycleContext(
-            0,
-            cycle_length,
-            vector([0.21] * cycle_length),
-            vector([0.11] * cycle_length),
-            vector([0.05] * cycle_length),
-        )
-        hc = HidingContext(cyc, None)
+        hc = HidingContext(cycle_length, None)
 
         phc = hc.get_public_hiding_context()
 
@@ -78,7 +70,7 @@ class TestPublicHidingContextSerialization:
 
         phc2 = PublicHidingContext.deserialize(serialization)
 
-        assert phc.cyc == phc2.cyc
+        assert phc.cycle_length == phc2.cycle_length
         assert phc.cc == phc2.cc
 
         # Test public key works
@@ -95,14 +87,7 @@ class TestHiddenBillSerialization:
 
     def test_hidden_bill_serialization(self):
         cycle_id, cycle_length = 0, 1024
-        cyc = CycleContext(
-            cycle_id,
-            cycle_length,
-            vector([0.21] * cycle_length),
-            vector([0.11] * cycle_length),
-            vector([0.05] * cycle_length),
-        )
-        hc = HidingContext(cyc, None)
+        hc = HidingContext(cycle_length, None)
 
         b, r = vector(list(range(1024))), vector(list(range(1024, 2048)))
         hb, hr = hc.encrypt(b), hc.encrypt(r)
