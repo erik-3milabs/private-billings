@@ -1,28 +1,16 @@
 from __future__ import annotations
-from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
-from private_billing.core import ClientID, HiddenBill, HiddenData, SEED, CycleContext
-
-from dataclasses import dataclass
-from private_billing.core.cycle import ClientID
-
-
-@dataclass
-class Target:
-    id: ClientID
-    ip: int
-
-    def send(self, msg: Message) -> None:
-        pass
+from .core import ClientID, HiddenBill, HiddenData, SEED, CycleContext
+from .server.message_handler import Message, MessageType, Target
 
 
 class ValidationException(Exception):
     pass
 
 
-class MessageType(Enum):
+class BillingMessageType(MessageType):
     HELLO = 0
     WELCOME = 1
     NEW_MEMBER = 2
@@ -37,28 +25,13 @@ class UserType(Enum):
     SERVER = 1
 
 
-class Message(ABC):
-
-    @property
-    def type(self) -> MessageType:
-        """Type of this message."""
-        raise NotImplementedError("Not implemented for abstract class")
-
-    def check_validity(self) -> None:
-        """
-        Check the validity of the content of this message.
-        :raises: ValidationException when invalid.
-        """
-        raise NotImplementedError("Not implemented for abstract class")
-
-
 @dataclass
 class HelloMessage(Message):
     user_type: UserType
 
     @property
-    def type(self) -> MessageType:
-        return MessageType.HELLO
+    def type(self) -> BillingMessageType:
+        return BillingMessageType.HELLO
 
     def check_validity(self) -> None:
         try:
@@ -72,15 +45,17 @@ class WelcomeMessage(Message):
     id: ClientID
     billing_server: Optional[Target]
     peers: List[Target]
+    cycle_length: int
 
     @property
-    def type(self) -> MessageType:
-        return MessageType.WELCOME
+    def type(self) -> BillingMessageType:
+        return BillingMessageType.WELCOME
 
     def check_validity(self) -> None:
         try:
             assert isinstance(self.id, int)
             assert isinstance(self.billing_server, (None, Target))
+            assert isinstance(self.cycle_length, int)
             assert isinstance(self.peers, list)
             for peer in self.peers:
                 assert isinstance(peer, Target)
@@ -94,8 +69,8 @@ class NewMemberMessage(Message):
     member_type: UserType
 
     @property
-    def type(self) -> MessageType:
-        return MessageType.NEW_MEMBER
+    def type(self) -> BillingMessageType:
+        return BillingMessageType.NEW_MEMBER
 
     def check_validity(self) -> None:
         try:
@@ -110,8 +85,8 @@ class ContextMessage(Message):
     context: CycleContext
 
     @property
-    def type(self) -> MessageType:
-        return MessageType.CYCLE_CONTEXT
+    def type(self) -> BillingMessageType:
+        return BillingMessageType.CYCLE_CONTEXT
 
     def check_validity(self) -> None:
         try:
@@ -125,8 +100,8 @@ class DataMessage(Message):
     data: HiddenData
 
     @property
-    def type(self) -> MessageType:
-        return MessageType.DATA
+    def type(self) -> BillingMessageType:
+        return BillingMessageType.DATA
 
     def check_validity(self) -> None:
         try:
@@ -140,8 +115,8 @@ class SeedMessage(Message):
     seed: SEED
 
     @property
-    def type(self) -> MessageType:
-        return MessageType.SEED
+    def type(self) -> BillingMessageType:
+        return BillingMessageType.SEED
 
     def check_validity(self) -> None:
         try:
@@ -155,8 +130,8 @@ class BillMessage(Message):
     bill: HiddenBill
 
     @property
-    def type(self) -> MessageType:
-        return MessageType.BILL
+    def type(self) -> BillingMessageType:
+        return BillingMessageType.BILL
 
     def check_validity(self) -> None:
         try:

@@ -1,4 +1,3 @@
-from .client import Client
-from .server import BillingServer
-from .operator import Operator
+from .peer import Peer
+from .billing import BillingServer
 from .messages import Message
