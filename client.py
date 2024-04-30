@@ -1,6 +1,6 @@
 from socketserver import TCPServer
 from common import CLIENT_PORT, MC
-from private_billing.peer import Peer, PeerDataStore
+from src.private_billing.peer import Peer, PeerDataStore
 
 import logging
 logger = logging.getLogger(__name__)

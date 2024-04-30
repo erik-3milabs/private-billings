@@ -1,5 +1,5 @@
 import pytest
-from private_billing.core import Bill
+from src.private_billing.core import Bill
 from tests.test_utils import get_test_cycle_context
 
 

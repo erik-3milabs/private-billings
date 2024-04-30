@@ -1,4 +1,4 @@
-from private_billing.core import Int64ToFloatConvertor
+from src.private_billing.core import Int64ToFloatConvertor
 
 
 def test_format():

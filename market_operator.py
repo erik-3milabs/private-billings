@@ -1,6 +1,6 @@
 from socketserver import TCPServer
 from common import MARKET_HOST, MARKET_PORT, MC
-from private_billing.market import MarketOperator, MarketOperatorDataStore
+from src.private_billing.market import MarketOperator, MarketOperatorDataStore
 
 import logging
 logger = logging.getLogger(__name__)

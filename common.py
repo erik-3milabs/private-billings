@@ -1,4 +1,4 @@
-from private_billing.server.market_config import MarketConfig
+from src.private_billing.server.market_config import MarketConfig
 
 
 MARKET_HOST, MARKET_PORT = "localhost", 5571

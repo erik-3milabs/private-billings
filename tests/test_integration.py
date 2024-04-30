@@ -1,4 +1,4 @@
-from private_billing.core import (
+from src.private_billing.core import (
     Bill,
     SharedBilling,
     ClientID,

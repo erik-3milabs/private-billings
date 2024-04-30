@@ -1,6 +1,6 @@
 from socketserver import TCPServer
 from common import BILLING_PORT, MC
-from private_billing.billing import BillingServer, BillingServerDataStore
+from src.private_billing.billing import BillingServer, BillingServerDataStore
 
 import logging
 
