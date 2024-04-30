@@ -1,3 +1,4 @@
+import logging
 import socketserver
 from typing import Dict
 import uuid
@@ -116,4 +117,23 @@ class MarketOperator(MessageHandler):
 if __name__ == "__main__":
     HOST, PORT = "localhost", 5555
     with socketserver.TCPServer((HOST, PORT), MarketOperator) as server:
+        server.serve_forever()
+
+
+def launch_market_operator(
+    market_config: MarketConfig, logging_level=logging.DEBUG
+) -> None:
+    # Specify logging setup
+    logging.basicConfig()
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging_level)
+
+    # Setup server
+    ds = MarketOperatorDataStore()
+    ds.market_config = market_config
+    ds.cycle_length = 1024
+
+    # Launch
+    server_address = (market_config.market_host, market_config.market_port)
+    with socketserver.TCPServer(server_address, MarketOperator) as server:
         server.serve_forever()

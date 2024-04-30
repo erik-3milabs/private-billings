@@ -1,4 +1,6 @@
+import logging
 import pickle
+from socketserver import TCPServer
 from typing import Any, Callable, Dict
 from .core import (
     Bill,
@@ -55,7 +57,7 @@ class PeerDataStore(metaclass=Singleton):
         self.peers: Dict[ClientID, Target] = {}
         self.billing_server: Target = None
         self.bills: Dict[CycleID, Bill] = {}
-        self.market_config = None
+        self.market_config: MarketConfig = None
 
 
 class Peer(MessageHandler):
@@ -135,3 +137,20 @@ class Peer(MessageHandler):
         hd_bytes = hidden_data.serialize()
         msg = DataMessage(hd_bytes)
         MessageSender.send(msg, self.data.billing_server)
+
+
+def launch_peer(
+    market_config: MarketConfig, logging_level=logging.DEBUG, ip: str = "localhost"
+) -> None:
+    # Specify logging setup
+    logging.basicConfig()
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging_level)
+
+    # Register with the market operator
+    PeerDataStore().market_config = market_config
+    Peer.register(market_config)
+
+    # Launch server
+    with TCPServer((ip, market_config.peer_port), Peer) as server:
+        server.serve_forever()

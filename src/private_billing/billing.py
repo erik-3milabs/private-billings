@@ -14,6 +14,8 @@ from .server import (
     MessageSender,
     Singleton,
 )
+from socketserver import TCPServer
+import logging
 
 
 class BillingServerDataStore(metaclass=Singleton):
@@ -79,3 +81,20 @@ class BillingServer(MessageHandler):
         """Attempt to run the billing process for the given cycle"""
         if self.data.shared_biller.is_ready(cycle_id):
             self.data.shared_biller.compute_bills(cycle_id)
+
+
+def launch_billing_server(
+    market_config: MarketConfig, logging_level=logging.DEBUG, ip: str = "localhost"
+) -> None:
+    # Specify logging setup
+    logging.basicConfig()
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging_level)
+
+    # Setup server
+    BillingServerDataStore().market_config = market_config
+    BillingServer.register(market_config)
+
+    # Launch
+    with TCPServer((ip, market_config.billing_port), BillingServer) as server:
+        server.serve_forever()
