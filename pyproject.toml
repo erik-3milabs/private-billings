@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "private_billings"
+version = "0.1.0"
+authors = [
+  { name="Erik Takke", email="erik.takke@3milabs.tech" },
+]
+description = "Exhange data to compute peer-to-peer trading bills in a privacy preserving fashion."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: Unix",
+]
+dependencies = [
+    "numpy",
+    "openfhe",
+    "pybind11",
+    "pytest",
+]
+
+[project.urls]
+Homepage = "https://github.com/3MI-Labs/private-billings"
+Issues = "https://github.com/3MI-Labs/private-billings/issues"
