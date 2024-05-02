@@ -1,8 +1,10 @@
 import sys
 from src.private_billing.server.market_config import MarketConfig
-from src.private_billing.market import launch_market_operator
-from src.private_billing.peer import launch_peer
-from src.private_billing.billing import launch_billing_server
+from src.private_billing import (
+    launch_market_operator,
+    launch_peer,
+    launch_billing_server,
+)
 
 if __name__ == "__main__":
     mc = MarketConfig("0.0.0.0", 5555, 5554, 5553)
