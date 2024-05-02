@@ -152,5 +152,7 @@ def launch_peer(
     Peer.register(market_config)
 
     # Launch server
-    with TCPServer((ip, market_config.peer_port), Peer) as server:
+    address = (ip, market_config.peer_port)
+    logger.info(f"Going live on {address=}")
+    with TCPServer(address, Peer) as server:
         server.serve_forever()

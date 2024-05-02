@@ -75,13 +75,13 @@ class MessageSender:
 
     @staticmethod
     def send(message: Message, target: Target) -> Optional[Message]:
+        logger.debug(f"sending: {message} to {target}")
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect(target.address)
 
             # Send
             msg_bytes = pickle.dumps(message)
             sock.sendall(msg_bytes)
-            logger.debug(f"sent: {message}")
 
             # Receive
             resp_bytes = sock.recv(1024)

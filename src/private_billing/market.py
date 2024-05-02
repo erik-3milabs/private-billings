@@ -134,6 +134,7 @@ def launch_market_operator(
     ds.cycle_length = 1024
 
     # Launch
-    server_address = (market_config.market_host, market_config.market_port)
-    with socketserver.TCPServer(server_address, MarketOperator) as server:
+    address = (market_config.market_host, market_config.market_port)
+    logger.info(f"Going live on {address=}")
+    with socketserver.TCPServer(address, MarketOperator) as server:
         server.serve_forever()

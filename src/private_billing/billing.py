@@ -96,5 +96,7 @@ def launch_billing_server(
     BillingServer.register(market_config)
 
     # Launch
-    with TCPServer((ip, market_config.billing_port), BillingServer) as server:
+    address = (ip, market_config.billing_port)
+    logger.info(f"Going live on {address=}")
+    with TCPServer(address, BillingServer) as server:
         server.serve_forever()
