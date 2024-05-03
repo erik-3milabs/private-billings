@@ -66,6 +66,15 @@ class SharedMaskGenerator:
         self.convertor = convertor
         self.owned_seeds: dict[ClientID, SEED] = {}
         self.foreign_seeds: dict[ClientID, SEED] = {}
+       
+    @property
+    def is_stable(self) -> bool:
+        """
+        Specifies whether this generator is stable.
+        This is to mean whether the set of peers it has generated seeds for
+        fully overlaps with the set of peers it has received seeds from.
+        """
+        return set(self.owned_seeds.keys()) == set(self.foreign_seeds.keys())
 
     def get_seed_for_peer(self, c: ClientID) -> SEED:
         seed = self._generate_random_seed()

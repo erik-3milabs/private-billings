@@ -40,6 +40,11 @@ class HidingContext:
     @property
     def _secret_key(self):
         return self._key_pair.secretKey
+    
+    @property
+    def is_ready(self):
+        """Whether this context is ready to hide/unhide data."""
+        return self.mask_generator.is_stable
 
     def get_public_hiding_context(self) -> PublicHidingContext:
         return PublicHidingContext(self.cycle_length, self.cc, self.public_key)
@@ -143,6 +148,10 @@ class PublicHidingContext(HidingContext, Serializible):
 
     @property
     def _secret_key(self):
+        raise NotImplementedError("not implemented for public")
+    
+    @property
+    def is_ready(self):
         raise NotImplementedError("not implemented for public")
 
     def decrypt(self, values: Ciphertext) -> list[float]:
