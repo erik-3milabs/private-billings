@@ -1,3 +1,5 @@
+from typing import Dict
+
 from .core import SharedBilling, ClientID, CycleID
 from .peer import Target
 from .messages import (
@@ -25,6 +27,7 @@ class BillingServerDataStore(metaclass=Singleton):
         self.shared_biller = SharedBilling()
         self.id: ClientID = None
         self.market_config: MarketConfig = None
+        self.participants: Dict[ClientID, Target] = {}
 
     @property
     def market_operator(self):
@@ -64,12 +67,12 @@ class BillingServer(MessageHandler):
     def handle_receive_welcome(self, msg: WelcomeMessage, sender: Target) -> None:
         self.id = msg.id
         for peer in msg.peers:
-            self.data.shared_biller.include_client(peer.id)
+            self.register_client(peer)
 
     def handle_new_member(self, msg: NewMemberMessage, sender: Target) -> None:
         if msg.member_type != UserType.CLIENT:
             return
-        self.data.shared_biller.include_client(msg.new_member.id)
+        self.register_client(msg.new_member)
 
     def handle_receive_data(self, msg: DataMessage, sender: Target) -> None:
         # Register data
@@ -82,6 +85,13 @@ class BillingServer(MessageHandler):
         """Attempt to run the billing process for the given cycle"""
         if self.data.shared_biller.is_ready(cycle_id):
             self.data.shared_biller.compute_bills(cycle_id)
+
+    def register_client(self, client: Target):
+        # Register with self
+        self.data.participants[client.id] = client
+            
+        # Register with the biller
+        self.data.shared_biller.include_client(client.id)
 
 
 def launch_billing_server(
