@@ -92,4 +92,5 @@ class Data:
         """
         supply_deviations = self.supplies - self.supply_promise
         consumption_deviations = self.consumptions - self.consumption_promise
-        return get_positive_flags(supply_deviations + consumption_deviations)
+        deviations = supply_deviations + consumption_deviations
+        return get_positive_flags(deviations) * self.accepted_flags
