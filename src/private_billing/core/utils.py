@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TypeVar
 
 Flag = int
@@ -12,16 +13,16 @@ class vector(list):
     def new(len, val=0):
         return vector([val] * len)
 
-    def __add__(self, o):
+    def __add__(self, o) -> vector:
         if not isinstance(o, vector):
             return super().__add__(o)
         assert len(self) == len(o)
         return vector([a + b for a, b in zip(self, o)])
 
-    def __iadd__(self, o):
+    def __iadd__(self, o) -> vector:
         return self + o
 
-    def __mul__(self, o):
+    def __mul__(self, o) -> vector:
         # element-wise vector multiplication
         if isinstance(o, vector):
             assert len(self) == len(o)
@@ -31,10 +32,10 @@ class vector(list):
             return vector([a * o for a in self])
         return super().__mul__(o)
 
-    def __imul__(self, o):
+    def __imul__(self, o) -> vector:
         return self * o
 
-    def __truediv__(self, o):
+    def __truediv__(self, o) -> vector:
         # element-wise vector division
         if isinstance(o, vector):
             assert len(self) == len(o)
@@ -44,19 +45,19 @@ class vector(list):
             return vector([a / o for a in self])
         return super().__truediv__(o)
 
-    def __itruediv__(self, o):
+    def __itruediv__(self, o) -> vector:
         return self / o
 
-    def __sub__(self, o):
+    def __sub__(self, o) -> vector:
         if not isinstance(o, vector):
             return super().__sub__(o)
         assert len(self) == len(o)
         return vector([a - b for a, b in zip(self, o)])
 
-    def __isub__(self, o):
+    def __isub__(self, o) -> vector:
         return self - o
 
-    def __mod__(self, o):
+    def __mod__(self, o) -> vector:
         # element-wise vector modulo
         if isinstance(o, vector):
             assert len(self) == len(o)
@@ -66,7 +67,7 @@ class vector(list):
             return vector([a % o for a in self])
         return super().__mod__(o)
 
-    def __imod__(self, o):
+    def __imod__(self, o) -> vector:
         return self % o
 
 

@@ -4,6 +4,9 @@ from .data import HiddenData
 
 
 class SharedBilling:
+    """
+    Component computing the peer-to-peer bills.
+    """
 
     def __init__(self) -> None:
         self.client_data: dict[CycleID, dict[ClientID, HiddenData]] = {}
@@ -11,21 +14,47 @@ class SharedBilling:
         self.clients: set[ClientID] = set()
 
     def record_data(self, data: HiddenData, c: ClientID) -> None:
+        """
+        Record data for a given client.
+
+        :param data: data to record,
+        :param c: client to record data for.
+        """
         self.client_data.setdefault(data.cycle_id, {})
         self.client_data.get(data.cycle_id)[c] = data
 
     def record_contexts(self, cyc: CycleContext) -> None:
+        """
+        Record a cycle context information
+
+        :param cyc: context to record
+        """
         self.cycle_contexts[cyc.cycle_id] = cyc
 
     def include_client(self, c: ClientID) -> None:
+        """
+        Include a client in coming billing cycles
+
+        :param c: client to include
+        """
         self.clients.add(c)
 
     def exclude_clients(self, c: ClientID) -> None:
+        """
+        Exclude a client from future billing cycles
+
+        :param c: client to exclude.
+        """
         if c in self.clients:
             self.clients.remove(c)
 
     def compute_bills(self, cid: CycleID) -> dict[ClientID, HiddenBill]:
-        """Compute bills for all clients, for a given cycle."""
+        """
+        Compute bills for all clients, for a given cycle.
+
+        :param cid: cycle to compute bills for
+        :return: map of clients and their bills
+        """
         # Gather data for the specified cycle
         cycle_data = self.client_data[cid]
         cyc = self.cycle_contexts[cid]
@@ -44,7 +73,7 @@ class SharedBilling:
         """
         Whether it is possible to compute bills for a given cycle.
 
-        :param cid: id of cycle for which to check
+        :param cid: id of cycle for which to check.
         :returns: whether it is possible.
         """
         is_ready = True
