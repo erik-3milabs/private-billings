@@ -25,6 +25,7 @@ from .messages import (
     WelcomeMessage,
 )
 from .server import (
+    IP,
     MarketConfig,
     MessageHandler,
     MessageSender,
@@ -140,7 +141,7 @@ class Peer(MessageHandler):
 
 
 def launch_peer(
-    market_config: MarketConfig, logging_level=logging.DEBUG, ip: str = "localhost"
+    market_config: MarketConfig, logging_level=logging.DEBUG, ip: IP = "localhost"
 ) -> None:
     # Specify logging setup
     logging.basicConfig()

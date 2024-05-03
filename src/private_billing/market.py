@@ -13,6 +13,7 @@ from .messages import (
     BillingMessageType,
 )
 from .server import (
+    IP,
     MarketConfig,
     MessageHandler,
     MessageSender,
@@ -25,11 +26,11 @@ class MarketOperatorDataStore(metaclass=Singleton):
     def __init__(self):
         self.cycle_length: int = -1
         self.cycle_contexts: Dict[CycleID, CycleContext] = {}
-        self.participants: Dict[str, Target] = {}
+        self.participants: Dict[IP, Target] = {}
         self.billing_server: Target = None
         self.market_config: MarketConfig = None
 
-    def get_peers(self, client: Target) -> Dict[str, Target]:
+    def get_peers(self, client: Target) -> Dict[IP, Target]:
         """Get all peers for a given participant."""
         return [p for p in self.participants.values() if p.ip != client.ip]
 

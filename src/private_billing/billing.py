@@ -9,6 +9,7 @@ from .messages import (
     WelcomeMessage,
 )
 from .server import (
+    IP,
     MarketConfig,
     MessageHandler,
     MessageSender,
@@ -84,7 +85,7 @@ class BillingServer(MessageHandler):
 
 
 def launch_billing_server(
-    market_config: MarketConfig, logging_level=logging.DEBUG, ip: str = "localhost"
+    market_config: MarketConfig, logging_level=logging.DEBUG, ip: IP = "localhost"
 ) -> None:
     # Specify logging setup
     logging.basicConfig()

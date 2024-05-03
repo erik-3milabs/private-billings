@@ -8,6 +8,7 @@ from typing import Callable, Dict, Optional
 from uuid import UUID
 
 import logging
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -31,10 +32,13 @@ class Message(ABC):
         raise NotImplementedError("Not implemented for abstract class")
 
 
+IP = str
+
+
 @dataclass
 class Target:
     id: UUID
-    address: tuple[str, int]
+    address: tuple[IP, int]
 
     @property
     def ip(self):
@@ -46,7 +50,7 @@ class Target:
 
 
 class MessageHandler(BaseRequestHandler):
-    
+
     @property
     def handlers(self) -> Dict[MessageType, Callable[[Message, Target], None]]:
         return {}
@@ -56,7 +60,7 @@ class MessageHandler(BaseRequestHandler):
         data = self.request.recv(1024).strip()
         msg: Message = pickle.loads(data)
         sender = Target(None, self.client_address)
-        
+
         logger.debug(f"received: {msg}")
 
         # handle message
