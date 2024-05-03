@@ -59,6 +59,11 @@ class PeerDataStore(metaclass=Singleton):
         self.billing_server: Target = None
         self.bills: Dict[CycleID, Bill] = {}
         self.market_config: MarketConfig = None
+    
+    @property
+    def market_operator(self) -> Target:
+        address = (self.market_config.market_host, self.market_config.market_port)
+        return Target(None, address)
 
 
 class Peer(MessageHandler):
@@ -135,8 +140,7 @@ class Peer(MessageHandler):
 
     def _send_data(self, data: Data) -> None:
         hidden_data = data.hide(self.hc)
-        hd_bytes = hidden_data.serialize()
-        msg = DataMessage(hd_bytes)
+        msg = DataMessage(hidden_data)
         MessageSender.send(msg, self.data.billing_server)
 
 

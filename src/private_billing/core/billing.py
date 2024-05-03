@@ -8,7 +8,7 @@ class SharedBilling:
     def __init__(self) -> None:
         self.client_data: dict[CycleID, dict[ClientID, HiddenData]] = {}
         self.cycle_contexts: dict[CycleID, CycleContext] = {}
-        self.clients: set = set()
+        self.clients: set[ClientID] = set()
 
     def record_data(self, data: HiddenData, c: ClientID) -> None:
         self.client_data.setdefault(data.cycle_id, {})
