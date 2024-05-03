@@ -3,6 +3,7 @@ from typing import Dict
 from .core import SharedBilling, ClientID, CycleID
 from .peer import Target
 from .messages import (
+    BillMessage,
     DataMessage,
     HelloMessage,
     BillingMessageType,
@@ -79,13 +80,20 @@ class BillingServer(MessageHandler):
         self.data.shared_biller.record_data(msg.data, sender.id)
 
         # Attempt to start billing process
-        self.attempt_billing(msg.data.cycle_id)
-
-    def attempt_billing(self, cycle_id: CycleID) -> None:
-        """Attempt to run the billing process for the given cycle"""
+        cycle_id = msg.data.cycle_id
         if self.data.shared_biller.is_ready(cycle_id):
-            self.data.shared_biller.compute_bills(cycle_id)
+            self.run_billing(cycle_id)
 
+    def run_billing(self, cycle_id: CycleID) -> None:
+        """Attempt to run the billing process for the given cycle"""
+        bills = self.data.shared_biller.compute_bills(cycle_id)
+        
+        # Return bills to clients
+        for id, client in self.data.participants.items():
+            bill = bills[id]
+            bill_msg = BillMessage(bill)
+            MessageSender(bill_msg, client)
+            
     def register_client(self, client: Target):
         # Register with self
         self.data.participants[client.id] = client
