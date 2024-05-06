@@ -79,7 +79,7 @@ class MarketOperator(MessageHandler):
         # Send subscribe message to other peers
         for peer in peers:
             new_subscriber_msg = NewMemberMessage(client, UserType.CLIENT)
-            MessageSender.send(new_subscriber_msg, peer)
+            self.send(new_subscriber_msg, peer)
 
     def register_new_billing_server(self, server: Target) -> None:
         known_server = self.data.billing_server
@@ -103,13 +103,13 @@ class MarketOperator(MessageHandler):
         for peer in self.data.participants.values():
             peer.address = peer.address[0], self.data.market_config.peer_port
             new_server_msg = NewMemberMessage(server, UserType.SERVER)
-            MessageSender.send(new_server_msg, peer)
+            self.send(new_server_msg, peer)
 
     def distribute_cycle_context(self, cyc: CycleContext) -> None:
         msg = ContextMessage(cyc)
         for peer in self.data.participants:
-            MessageSender.send(msg, peer)
-        MessageSender.send(self.data.billing_server, msg)
+            self.send(msg, peer)
+        self.send(self.data.billing_server, msg)
 
     def _generate_new_uuid(self) -> ClientID:
         return uuid.uuid4().int

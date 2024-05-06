@@ -31,6 +31,7 @@ from .server import (
     MessageSender,
     Target,
     Singleton,
+    no_response
 )
 
 
@@ -95,6 +96,7 @@ class Peer(MessageHandler):
 
     # Handlers
 
+    @no_response
     def handle_welcome(self, msg: WelcomeMessage) -> None:
         # Set up hiding context with info
         self._init_hiding_context(msg.cycle_length)
@@ -103,6 +105,7 @@ class Peer(MessageHandler):
         for peer in msg.peers:
             self._include_peer(peer)
 
+    @no_response
     def handle_new_member(self, msg: NewMemberMessage, sender: Target) -> None:
         match msg.member_type:
             case UserType.CLIENT:
@@ -111,14 +114,17 @@ class Peer(MessageHandler):
             case UserType.SERVER:
                 self.data.billing_server = msg.new_member
 
+    @no_response
     def handle_receive_seed(self, msg: SeedMessage, sender: Target):
         self.data.mg.consume_foreign_seed(msg.seed, sender.id)
 
+    @no_response
     def handle_receive_bill(self, msg: BillMessage, sender: Target):
         hb = msg.bill
         bill = hb.reveal(self.hc)
         self.data.bills[bill.cycle_id] = bill
 
+    @no_response
     def handle_receive_context(self, msg: ContextMessage) -> None:
         context = msg.context
         self.data.context[context.cycle_id] = context
@@ -131,7 +137,7 @@ class Peer(MessageHandler):
     def _send_seed(self, peer: Target) -> None:
         seed = self.data.mg.get_seed_for_peer(peer.id)
         msg = SeedMessage(seed)
-        MessageSender.send(msg, peer)
+        self.send(msg, peer)
 
     def _include_peer(self, peer: Target) -> None:
         if self.data.mg.has_seed_for_peer(peer):
@@ -141,7 +147,7 @@ class Peer(MessageHandler):
     def _send_data(self, data: Data) -> None:
         hidden_data = data.hide(self.hc)
         msg = DataMessage(hidden_data)
-        MessageSender.send(msg, self.data.billing_server)
+        self.send(msg, self.data.billing_server)
 
 
 def launch_peer(

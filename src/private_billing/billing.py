@@ -17,6 +17,7 @@ from .server import (
     MessageHandler,
     MessageSender,
     Singleton,
+    no_response
 )
 from socketserver import TCPServer
 import logging
@@ -65,16 +66,19 @@ class BillingServer(MessageHandler):
         for peer_id in peer_ids:
             ds.shared_biller.include_client(peer_id)
 
+    @no_response
     def handle_receive_welcome(self, msg: WelcomeMessage, sender: Target) -> None:
         self.id = msg.id
         for peer in msg.peers:
             self.register_client(peer)
 
+    @no_response
     def handle_new_member(self, msg: NewMemberMessage, sender: Target) -> None:
         if msg.member_type != UserType.CLIENT:
             return
         self.register_client(msg.new_member)
 
+    @no_response
     def handle_receive_data(self, msg: DataMessage, sender: Target) -> None:
         # Register data
         self.data.shared_biller.record_data(msg.data, sender.id)
