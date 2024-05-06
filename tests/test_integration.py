@@ -58,9 +58,9 @@ class TestIntegration:
                 client=c,
                 cycle_id=0,
                 consumptions=vector([is_consumer * i] * cyc.cycle_length),
-                consumption_promise=vector([is_consumer * i] * cyc.cycle_length),
+                consumption_promises=vector([is_consumer * i] * cyc.cycle_length),
                 supplies=vector([is_producer * i] * cyc.cycle_length),
-                supply_promise=vector(vector([is_producer * i] * cyc.cycle_length)),
+                supply_promises=vector(vector([is_producer * i] * cyc.cycle_length)),
                 accepted_flags=vector([1] * cyc.cycle_length),
             )
 
@@ -105,7 +105,7 @@ class TestIntegration:
         # Compute total deviations
         total_deviations = vector.new(cyc.cycle_length)
         for c, d in client_data.items():
-            total_deviations += d.get_individual_deviations()
+            total_deviations += d.individual_deviations
 
         bills = {}
         for c, d in client_data.items():
@@ -119,7 +119,7 @@ class TestIntegration:
                 d.consumptions,
                 d.supplies,
                 total_deviations,
-                d.get_individual_deviations(),
+                d.individual_deviations,
             ):
                 if accepted:
                     if td == 0:

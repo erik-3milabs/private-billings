@@ -70,6 +70,19 @@ class vector(list):
     def __imod__(self, o) -> vector:
         return self % o
 
+    def __xor__(self, o) -> vector:
+        # element-wise vector summation, using the xor operation
+        if isinstance(o, vector):
+            assert len(self) == len(o)
+            return vector([a ^ b for a, b in zip(self, o)])
+        # scalar xor
+        elif isinstance(o, (float, int)):
+            return vector([a ^ o for a in self])
+        return super().__mod__(o)
+
+    def __ixor__(self, o) -> vector:
+        return self % o
+
 
 T = TypeVar("T")
 
