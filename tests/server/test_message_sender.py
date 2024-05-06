@@ -40,7 +40,7 @@ class TestMessageSender:
         )
 
         def send(dest):
-            sleep(0.5)
+            sleep(0.1)
             MessageSender.send(msg, dest)
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -64,6 +64,43 @@ class TestMessageSender:
 
         assert msg == rcvd_msg
 
+    def test_send_msg_large(self):
+        data = Data(
+            0,
+            1,
+            vector.new(2048, 1),
+            vector.new(2048, 2),
+            vector.new(2048, 3),
+            vector.new(2048, 4),
+            None,
+        )
+        msg = DataMessage(data)
+
+        def send(dest):
+            sleep(0.1)
+            MessageSender.send(msg, dest)
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(("localhost", 0))
+            address = "localhost", s.getsockname()[1]
+            print(f"bound to {address}")
+
+            dest = Target(0, address)
+            thread = Thread(target=send, args=(dest,))
+            thread.start()
+
+            s.listen()
+
+            conn, _ = s.accept()
+            with conn:
+                rcvd_msg = MessageSender._receive(conn)
+
+            thread.join()
+
+        assert rcvd_msg == msg
+
+
+class TestSendIntegration:
     def test_send_large_message(self):
         cycle_length = 1024
         mg = SharedMaskGenerator(Int64ToFloatConvertor(4, 4))
@@ -78,10 +115,11 @@ class TestMessageSender:
             vector.new(cycle_length, 0),
         )
         hd = data.hide(hc)
+        hd.phc = None
         msg = DataMessage(hd)
 
         def send(dest):
-            sleep(0.5)
+            sleep(0.1)
             MessageSender.send(msg, dest)
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
