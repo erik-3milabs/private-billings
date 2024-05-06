@@ -6,7 +6,7 @@ from src.private_billing.core import (
     PublicHidingContext,
     vector,
 )
-from tests.test_utils import are_equal_ciphertexts
+from .tools import are_equal_ciphertexts
 
 
 class TestHiddenDataSerialization:
@@ -17,13 +17,13 @@ class TestHiddenDataSerialization:
         hd = HiddenData(
             0,
             1,
-            hc.encrypt(vector([1] * cyc_length)),
-            hc.encrypt(vector([2] * cyc_length)),
-            hc.encrypt(vector([3] * cyc_length)),
-            hc.encrypt(vector([4] * cyc_length)),
-            vector([6] * cyc_length),
-            vector([7] * cyc_length),
-            vector([0] * cyc_length),
+            hc.encrypt(vector.new(cyc_length, 1)),
+            hc.encrypt(vector.new(cyc_length, 2)),
+            hc.encrypt(vector.new(cyc_length, 3)),
+            hc.encrypt(vector.new(cyc_length, 4)),
+            vector.new(cyc_length, 6),
+            vector.new(cyc_length, 7),
+            vector.new(cyc_length, 0),
             hc.get_public_hiding_context(),
         )
 
@@ -31,7 +31,7 @@ class TestHiddenDataSerialization:
 
         # ... send to elsewhere ...
 
-        hd1 = HiddenData.deserialize(serialization)
+        hd1: HiddenData = HiddenData.deserialize(serialization)
 
         assert hd1.client == hd.client
         assert hd1.cycle_id == hd.cycle_id
@@ -74,7 +74,7 @@ class TestPublicHidingContextSerialization:
         assert phc.cc == phc2.cc
 
         # Test public key works
-        vals = vector(list(range(1024)))
+        vals = vector(range(1024))
         enc = phc2.encrypt(vals)
         dec = hc.decrypt(enc)
 
@@ -89,7 +89,7 @@ class TestHiddenBillSerialization:
         cycle_id, cycle_length = 0, 1024
         hc = HidingContext(cycle_length, None)
 
-        b, r = vector(list(range(1024))), vector(list(range(1024, 2048)))
+        b, r = vector(range(1024)), vector(range(1024, 2048))
         hb, hr = hc.encrypt(b), hc.encrypt(r)
         bill = HiddenBill(cycle_id, hb, hr)
 
@@ -114,16 +114,16 @@ class TestCycleContextSerialization:
         cyc = CycleContext(
             cycle_id,
             cycle_length,
-            vector([0.21] * cycle_length),
-            vector([0.11] * cycle_length),
-            vector([0.05] * cycle_length),
+            vector.new(cycle_length, 0.21),
+            vector.new(cycle_length, 0.11),
+            vector.new(cycle_length, 0.05),
         )
 
         serialization = cyc.serialize()
 
         # ... send over ...
 
-        cyc2 = cyc.deserialize(serialization)
+        cyc2: CycleContext = cyc.deserialize(serialization)
 
         assert cyc.cycle_id == cyc2.cycle_id
         assert cyc.cycle_length == cyc2.cycle_length

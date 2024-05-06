@@ -18,9 +18,9 @@ class TestIntegration:
 
     def get_cycle_context(self):
         cycle_length = 2048
-        retail_prices = vector([0.21] * cycle_length)
-        trading_prices = vector([0.11] * cycle_length)
-        feed_in_tarifs = vector([0.05] * cycle_length)
+        retail_prices = vector.new(cycle_length, 0.21)
+        trading_prices = vector.new(cycle_length, 0.11)
+        feed_in_tarifs = vector.new(cycle_length, 0.05)
         return CycleContext(
             0, cycle_length, retail_prices, feed_in_tarifs, trading_prices
         )
@@ -57,11 +57,11 @@ class TestIntegration:
             data[c] = Data(
                 client=c,
                 cycle_id=0,
-                consumptions=vector([is_consumer * i] * cyc.cycle_length),
-                consumption_promises=vector([is_consumer * i] * cyc.cycle_length),
-                supplies=vector([is_producer * i] * cyc.cycle_length),
-                supply_promises=vector(vector([is_producer * i] * cyc.cycle_length)),
-                accepted_flags=vector([1] * cyc.cycle_length),
+                consumptions=vector.new(cyc.cycle_length, is_consumer * i),
+                consumption_promises=vector.new(cyc.cycle_length, is_consumer * i),
+                supplies=vector.new(cyc.cycle_length, is_producer * i),
+                supply_promises=vector.new(cyc.cycle_length, is_producer * i),
+                accepted_flags=vector.new(cyc.cycle_length, 1)
             )
 
         return data

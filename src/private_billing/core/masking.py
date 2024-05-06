@@ -1,4 +1,4 @@
-from .utils import vec_sum, vector
+from .utils import vector
 from .cycle import ClientID
 from abc import ABC
 import math
@@ -128,7 +128,7 @@ class SharedMaskGenerator:
         return masks
 
     def unmask(self, vals: list[vector]) -> vector:
-        return vec_sum(vals)
+        return sum(vals[1:], vals[0])
 
     def _convert_vector(self, vals: vector[int]) -> vector:
         return vector([self.convertor.convert_from_int64(v) for v in vals])

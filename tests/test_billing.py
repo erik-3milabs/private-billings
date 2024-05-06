@@ -1,5 +1,5 @@
 from src.private_billing.core import SharedBilling, HiddenData, vector
-from tests.test_utils import MockedHidingContext, get_test_cycle_context
+from .tools import MockedHidingContext, get_test_cycle_context
 
 
 class TestSharedBillingComputeBills:
