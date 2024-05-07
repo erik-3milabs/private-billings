@@ -88,7 +88,7 @@ class vector(list):
         return super().__mod__(o)
 
     def __ixor__(self, o) -> vector:
-        return self % o
+        return self ^ o
 
 
 T = TypeVar("T")
