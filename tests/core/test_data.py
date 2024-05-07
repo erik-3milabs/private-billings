@@ -12,31 +12,11 @@ class TestDataValidity:
         d = Data(
             client=0,
             cycle_id=1,
-            consumptions=vector.new(cycle_length, 0.01),
-            supplies=vector.new(cycle_length, 0.0),
-            consumption_promises=vector.new(cycle_length, 0),
-            supply_promises=vector.new(cycle_length, 0),
-            accepted_flags=vector.new(cycle_length, 1),
+            utilization_promises=vector.new(cycle_length, 0),
+            utilizations=vector.new(cycle_length, 0.01),
         )
 
         d.check_validity(cyc)
-
-    def test_check_validity_both_consumption_and_supply(self):
-        cycle_length = 1024
-        cyc = get_test_cycle_context(1, cycle_length)
-
-        d = Data(
-            client=0,
-            cycle_id=1,
-            consumptions=vector.new(cycle_length, 0.01),
-            supplies=vector.new(cycle_length, 0.1),
-            consumption_promises=vector.new(cycle_length, 0),
-            supply_promises=vector.new(cycle_length, 0),
-            accepted_flags=vector.new(cycle_length, 1),
-        )
-
-        with pytest.raises(AssertionError):
-            d.check_validity(cyc)
 
     def test_check_validity_wrong_id(self):
         cycle_length = 1024
@@ -45,11 +25,8 @@ class TestDataValidity:
         d = Data(
             client=0,
             cycle_id=0,
-            consumptions=vector.new(cycle_length, 0.01),
-            supplies=vector.new(cycle_length, 0.005),
-            consumption_promises=vector.new(cycle_length, 0),
-            supply_promises=vector.new(cycle_length, 0),
-            accepted_flags=vector.new(cycle_length, 1),
+            utilization_promises=vector.new(cycle_length, 0),
+            utilizations=vector.new(cycle_length, 0.01),
         )
 
         with pytest.raises(AssertionError):
@@ -62,12 +39,9 @@ class TestDataValidity:
         wrong_length = 512
         d = Data(
             client=0,
-            cycle_id=1,
-            consumptions=vector.new(wrong_length, 0.01),
-            supplies=vector.new(wrong_length, 0.005),
-            consumption_promises=vector.new(wrong_length, 0),
-            supply_promises=vector.new(wrong_length, 0),
-            accepted_flags=vector.new(wrong_length, 1),
+            cycle_id=0,
+            utilization_promises=vector.new(wrong_length, 0),
+            utilizations=vector.new(wrong_length, 0.01),
         )
 
         with pytest.raises(AssertionError):
@@ -81,12 +55,10 @@ class TestDataGetDeviations:
         d = Data(
             client=0,
             cycle_id=0,
-            consumption_promises=vector.new(cycle_length, 0.05),
-            consumptions=vector.new(cycle_length, 0.01),
-            supply_promises=vector.new(cycle_length, 0.0),
-            supplies=vector.new(cycle_length, 0.0),
-            accepted_flags=vector.new(cycle_length, 1),
+            utilization_promises=vector.new(cycle_length, 0.05),
+            utilizations=vector.new(cycle_length, 0.01),
         )
+        print(d.consumption_deviations[0], d.supply_deviations[0], d.accepted_consumer_flags[0], d.accepted_producer_flags[0])
 
         assert d.individual_deviations == vector.new(cycle_length, 0.04)
 
@@ -95,11 +67,8 @@ class TestDataGetDeviations:
         d = Data(
             client=0,
             cycle_id=0,
-            consumption_promises=vector.new(cycle_length, 0.0),
-            consumptions=vector.new(cycle_length, 0.0),
-            supply_promises=vector.new(cycle_length, 0.1),
-            supplies=vector.new(cycle_length, 0.05),
-            accepted_flags=vector.new(cycle_length, 1),
+            utilization_promises=vector.new(cycle_length, -0.1),
+            utilizations=vector.new(cycle_length, -0.05),
         )
 
         assert d.individual_deviations == vector.new(cycle_length, -0.05)
@@ -109,14 +78,11 @@ class TestDataGetDeviations:
         d = Data(
             client=0,
             cycle_id=0,
-            consumption_promises=vector.new(cycle_length, 0.05),
-            consumptions=vector.new(cycle_length, 0.01),
-            supply_promises=vector.new(cycle_length, 1.0),
-            supplies=vector.new(cycle_length, 1.5),
-            accepted_flags=vector.new(cycle_length, 0),
+            utilization_promises=vector.new(cycle_length, 0),
+            utilizations=vector.new(cycle_length, 0.01)
         )
 
-        # Deviations should be zero, because we were not accepted for trading
+        # Deviations should be zero, because we did not promise to consume/produce
         assert d.individual_deviations == vector.new(cycle_length, 0.0)
 
 
@@ -127,11 +93,8 @@ class TestDataGetDeviationFlags:
         d = Data(
             client=0,
             cycle_id=0,
-            consumption_promises=vector.new(cycle_length, 1),
-            consumptions=vector.new(cycle_length, 2),
-            supply_promises=vector.new(cycle_length, 0.0),
-            supplies=vector.new(cycle_length, 0.0),
-            accepted_flags=vector.new(cycle_length, 1),
+            utilization_promises=vector.new(cycle_length, 1),
+            utilizations=vector.new(cycle_length, 2)
         )
 
         assert d.positive_deviation_flags == vector.new(cycle_length, 1)
@@ -141,11 +104,8 @@ class TestDataGetDeviationFlags:
         d = Data(
             client=0,
             cycle_id=0,
-            consumption_promises=vector.new(cycle_length, 5),
-            consumptions=vector.new(cycle_length, 1),
-            supply_promises=vector.new(cycle_length, 0.0),
-            supplies=vector.new(cycle_length, 0.0),
-            accepted_flags=vector.new(cycle_length, 1),
+            utilization_promises=vector.new(cycle_length, 5),
+            utilizations=vector.new(cycle_length, 1)
         )
 
         assert d.positive_deviation_flags == vector.new(cycle_length, 0)
@@ -157,11 +117,8 @@ class TestDataGetDeviationFlags:
         d = Data(
             client=0,
             cycle_id=0,
-            consumption_promises=vector.new(cycle_length, 1),
-            consumptions=vector.new(cycle_length, 5),
-            supply_promises=vector.new(cycle_length, 0.0),
-            supplies=vector.new(cycle_length, 0.0),
-            accepted_flags=vector.new(cycle_length, 0),
+            utilization_promises=vector.new(cycle_length, 0),
+            utilizations=vector.new(cycle_length, 5)
         )
 
         assert d.positive_deviation_flags == vector.new(cycle_length, 0)
@@ -171,11 +128,8 @@ class TestDataGetDeviationFlags:
         d = Data(
             client=0,
             cycle_id=0,
-            consumption_promises=vector.new(cycle_length, 0.0),
-            consumptions=vector.new(cycle_length, 0.0),
-            supply_promises=vector.new(cycle_length, 1),
-            supplies=vector.new(cycle_length, 2),
-            accepted_flags=vector.new(cycle_length, 1),
+            utilization_promises=vector.new(cycle_length, -1),
+            utilizations=vector.new(cycle_length, -2)
         )
 
         assert d.positive_deviation_flags == vector.new(cycle_length, 1)
@@ -185,11 +139,8 @@ class TestDataGetDeviationFlags:
         d = Data(
             client=0,
             cycle_id=0,
-            consumption_promises=vector.new(cycle_length, 0.0),
-            consumptions=vector.new(cycle_length, 0.0),
-            supply_promises=vector.new(cycle_length, 2),
-            supplies=vector.new(cycle_length, 0.5),
-            accepted_flags=vector.new(cycle_length, 1),
+            utilization_promises=vector.new(cycle_length, -2),
+            utilizations=vector.new(cycle_length, -0.5)
         )
 
         assert d.positive_deviation_flags == vector.new(cycle_length, 0)
@@ -201,11 +152,8 @@ class TestDataGetDeviationFlags:
         d = Data(
             client=0,
             cycle_id=0,
-            consumption_promises=vector.new(cycle_length, 0.0),
-            consumptions=vector.new(cycle_length, 0.0),
-            supply_promises=vector.new(cycle_length, 0.5),
-            supplies=vector.new(cycle_length, 1),
-            accepted_flags=vector.new(cycle_length, 0),
+            utilization_promises=vector.new(cycle_length, 0),
+            utilizations=vector.new(cycle_length, -1)
         )
 
         assert d.positive_deviation_flags == vector.new(cycle_length, 0)
@@ -220,11 +168,8 @@ class TestDataHide:
         d = Data(
             client=0,
             cycle_id=0,
-            consumption_promises=vector.new(cycle_length, 0.05),
-            consumptions=vector.new(cycle_length, 0.10),
-            supply_promises=vector.new(cycle_length, 0.0),
-            supplies=vector.new(cycle_length, 0.0),
-            accepted_flags=vector.new(cycle_length, 1),
+            utilization_promises=vector.new(cycle_length, 0.05),
+            utilizations=vector.new(cycle_length, 0.10)
         )
 
         hd = d.hide(mhc)
@@ -238,7 +183,8 @@ class TestDataHide:
         assert hd.cycle_id == d.cycle_id
         assert hd.consumptions == [c + 1 for c in d.consumptions]
         assert hd.supplies == [s + 1 for s in d.supplies]
-        assert hd.accepted_flags == [f + 1 for f in d.accepted_flags]
+        assert hd.accepted_consumer_flags == [f + 1 for f in d.accepted_consumer_flags]
+        assert hd.accepted_producer_flags == [f + 1 for f in d.accepted_producer_flags]
         assert hd.positive_deviation_flags == [f + 1 for f in positive_deviations]
         assert hd.masked_individual_deviations == [
             d + 0 for d in d.individual_deviations

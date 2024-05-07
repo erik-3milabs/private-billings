@@ -10,23 +10,17 @@ class TestSharedBillingComputeBills:
 
         mhc = MockedHidingContext("cc", "mg")
 
-        consumptions = vector([0.05] * cycle_length)
-        supplies = vector([0.00] * cycle_length)
-        accepted_flags = vector([1] * cycle_length)
-        positive_deviation_flags = vector([0] * cycle_length)
-        individual_deviations = vector([0] * cycle_length)
-        p2p_consumer_flags = vector([1] * cycle_length)
-        p2p_producer_flags = vector([0] * cycle_length)
         hd = HiddenData(
             0,
             1,
-            consumptions,
-            supplies,
-            accepted_flags,
-            positive_deviation_flags,
-            individual_deviations,
-            p2p_consumer_flags,
-            p2p_producer_flags,
+            consumptions=vector.new(cycle_length, 0.05),
+            supplies=vector.new(cycle_length, 0.00),
+            accepted_consumer_flags=vector.new(cycle_length, 1),
+            accepted_producer_flags=vector.new(cycle_length, 0),
+            positive_deviation_flags=vector.new(cycle_length, 0),
+            individual_deviations=vector.new(cycle_length, 0),
+            p2p_consumer_flags=vector.new(cycle_length, 1),
+            p2p_producer_flags=vector.new(cycle_length, 0),
             phc=mhc.get_public_hiding_context(),
         )
 
@@ -41,7 +35,7 @@ class TestSharedBillingComputeBills:
 
         # Check bill is correct
         bill = bills[0]
-        assert bill.hidden_bill == consumptions * cyc.trading_prices
+        assert bill.hidden_bill == hd.consumptions * cyc.trading_prices
         # Note: not checking rewards, since this is a consumer (see consumer flags)
 
     def test_compute_bills_consumer_with_deviation(self):
@@ -49,23 +43,17 @@ class TestSharedBillingComputeBills:
         cyc = get_test_cycle_context(1, cycle_length)
         mhc = MockedHidingContext("cc", "mg")
 
-        consumptions = vector([1.1] * cycle_length)
-        supplies = vector([0.0] * cycle_length)
-        accepted_flags = vector([1] * cycle_length)
-        positive_deviation_flags = vector([1] * cycle_length)
-        individual_deviations = vector([-0.1] * cycle_length)
-        p2p_consumer_flags = vector([1] * cycle_length)
-        p2p_producer_flags = vector([0] * cycle_length)
         hd = HiddenData(
             0,
             1,
-            consumptions,
-            supplies,
-            accepted_flags,
-            positive_deviation_flags,
-            individual_deviations,
-            p2p_consumer_flags,
-            p2p_producer_flags,
+            consumptions=vector.new(cycle_length, 1.1),
+            supplies=vector.new(cycle_length, 0.0),
+            accepted_consumer_flags=vector.new(cycle_length, 1),
+            accepted_producer_flags=vector.new(cycle_length, 0),
+            positive_deviation_flags=vector.new(cycle_length, 1),
+            individual_deviations=vector.new(cycle_length, -0.1),
+            p2p_consumer_flags=vector.new(cycle_length, 1),
+            p2p_producer_flags=vector.new(cycle_length, 0),
             phc=mhc.get_public_hiding_context(),
         )
 
@@ -80,8 +68,8 @@ class TestSharedBillingComputeBills:
 
         # Check bill is correct
         bill = bills[0]
-        assert bill.hidden_bill == consumptions * cyc.trading_prices + (
-            individual_deviations * (cyc.retail_prices - cyc.trading_prices)
+        assert bill.hidden_bill == hd.consumptions * cyc.trading_prices + (
+            hd.individual_deviations * (cyc.retail_prices - cyc.trading_prices)
         )
         # Note: not checking rewards, since this is a consumer (see consumer flags)
 
@@ -91,23 +79,17 @@ class TestSharedBillingComputeBills:
 
         mhc = MockedHidingContext("cc", "mg")
 
-        consumptions = vector([0.0] * cycle_length)
-        supplies = vector([0.05] * cycle_length)
-        accepted_flags = vector([1] * cycle_length)
-        positive_deviation_flags = vector([0] * cycle_length)
-        individual_deviations = vector([0.0] * cycle_length)
-        p2p_consumer_flags = vector([0] * cycle_length)
-        p2p_producer_flags = vector([1] * cycle_length)
         hd = HiddenData(
             0,
             1,
-            consumptions,
-            supplies,
-            accepted_flags,
-            positive_deviation_flags,
-            individual_deviations,
-            p2p_consumer_flags,
-            p2p_producer_flags,
+            consumptions=vector.new(cycle_length, 0.0),
+            supplies=vector.new(cycle_length, 0.05),
+            accepted_consumer_flags=vector.new(cycle_length, 0),
+            accepted_producer_flags=vector.new(cycle_length, 1),
+            positive_deviation_flags=vector.new(cycle_length, 0),
+            individual_deviations=vector.new(cycle_length, 0.0),
+            p2p_consumer_flags=vector.new(cycle_length, 0),
+            p2p_producer_flags=vector.new(cycle_length, 1),
             phc=mhc.get_public_hiding_context(),
         )
 
@@ -122,7 +104,7 @@ class TestSharedBillingComputeBills:
 
         # Check reward is correct
         bill = bills[0]
-        assert bill.hidden_reward == supplies * cyc.trading_prices
+        assert bill.hidden_reward == hd.supplies * cyc.trading_prices
         # Note: not checking bills, since this is a producer
 
     def test_compute_bills_producer_with_deviation(self):
@@ -131,23 +113,17 @@ class TestSharedBillingComputeBills:
 
         mhc = MockedHidingContext("cc", "mg")
 
-        consumptions = vector([0.0] * cycle_length)
-        supplies = vector([1.1] * cycle_length)
-        accepted_flags = vector([1] * cycle_length)
-        positive_deviation_flags = vector([1] * cycle_length)
-        individual_deviations = vector([0.1] * cycle_length)
-        p2p_consumer_flags = vector([0] * cycle_length)
-        p2p_producer_flags = vector([1] * cycle_length)
         hd = HiddenData(
             0,
             1,
-            consumptions,
-            supplies,
-            accepted_flags,
-            positive_deviation_flags,
-            individual_deviations,
-            p2p_consumer_flags,
-            p2p_producer_flags,
+            consumptions=vector.new(cycle_length, 0.0),
+            supplies=vector.new(cycle_length, 1.1),
+            accepted_consumer_flags=vector.new(cycle_length, 0),
+            accepted_producer_flags=vector.new(cycle_length, 1),
+            positive_deviation_flags=vector.new(cycle_length, 1),
+            individual_deviations=vector.new(cycle_length, 0.1),
+            p2p_consumer_flags=vector.new(cycle_length, 0),
+            p2p_producer_flags=vector.new(cycle_length, 1),
             phc=mhc.get_public_hiding_context(),
         )
 
@@ -162,7 +138,7 @@ class TestSharedBillingComputeBills:
 
         # Check reward is correct
         bill = bills[0]
-        assert bill.hidden_reward == supplies * cyc.trading_prices + (
-            individual_deviations * (cyc.feed_in_tarifs - cyc.trading_prices)
+        assert bill.hidden_reward == hd.supplies * cyc.trading_prices + (
+            hd.individual_deviations * (cyc.feed_in_tarifs - cyc.trading_prices)
         )
         # Note: not checking bills, since this is a producer

@@ -21,6 +21,7 @@ class TestHiddenDataSerialization:
             hc.encrypt(vector.new(cyc_length, 2)),
             hc.encrypt(vector.new(cyc_length, 3)),
             hc.encrypt(vector.new(cyc_length, 4)),
+            hc.encrypt(vector.new(cyc_length, 5)),
             vector.new(cyc_length, 6),
             vector.new(cyc_length, 7),
             vector.new(cyc_length, 0),
@@ -37,7 +38,8 @@ class TestHiddenDataSerialization:
         assert hd1.cycle_id == hd.cycle_id
         assert are_equal_ciphertexts(hd1.consumptions, hd.consumptions, hc)
         assert are_equal_ciphertexts(hd1.supplies, hd.supplies, hc)
-        assert are_equal_ciphertexts(hd1.accepted_flags, hd.accepted_flags, hc)
+        assert are_equal_ciphertexts(hd1.accepted_consumer_flags, hd.accepted_consumer_flags, hc)
+        assert are_equal_ciphertexts(hd1.accepted_producer_flags, hd.accepted_producer_flags, hc)
         assert are_equal_ciphertexts(hd1.positive_deviation_flags, hd.positive_deviation_flags, hc)
         assert hd1.masked_individual_deviations == hd.masked_individual_deviations
         assert hd1.masked_p2p_consumer_flags == hd.masked_p2p_consumer_flags

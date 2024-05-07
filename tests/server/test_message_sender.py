@@ -70,9 +70,6 @@ class TestMessageSender:
             1,
             vector.new(2048, 1),
             vector.new(2048, 2),
-            vector.new(2048, 3),
-            vector.new(2048, 4),
-            None,
         )
         msg = DataMessage(data)
 
@@ -110,9 +107,6 @@ class TestSendIntegration:
             1,
             vector.new(cycle_length, 1),
             vector.new(cycle_length, 2),
-            vector.new(cycle_length, 3),
-            vector.new(cycle_length, 4),
-            vector.new(cycle_length, 0),
         )
         hd = data.hide(hc)
         hd.phc = None
@@ -151,7 +145,8 @@ class TestSendIntegration:
         # Check ciphertexts are identical
         assert are_equal_ciphertexts(rcvd_hd.consumptions, hd.consumptions, hc)
         assert are_equal_ciphertexts(rcvd_hd.supplies, hd.supplies, hc)
-        assert are_equal_ciphertexts(rcvd_hd.accepted_flags, hd.accepted_flags, hc)
+        assert are_equal_ciphertexts(rcvd_hd.accepted_consumer_flags, hd.accepted_consumer_flags, hc)
+        assert are_equal_ciphertexts(rcvd_hd.accepted_producer_flags, hd.accepted_producer_flags, hc)
         assert are_equal_ciphertexts(
             rcvd_hd.positive_deviation_flags, hd.positive_deviation_flags, hc
         )

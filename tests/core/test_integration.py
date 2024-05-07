@@ -52,16 +52,12 @@ class TestIntegration:
         data = {}
         for i, c in enumerate(client_ids):
             is_consumer: Flag = c % 2 == 0
-            is_producer: Flag = 1 - is_consumer
 
             data[c] = Data(
                 client=c,
                 cycle_id=0,
-                consumptions=vector.new(cyc.cycle_length, is_consumer * i),
-                consumption_promises=vector.new(cyc.cycle_length, is_consumer * i),
-                supplies=vector.new(cyc.cycle_length, is_producer * i),
-                supply_promises=vector.new(cyc.cycle_length, is_producer * i),
-                accepted_flags=vector.new(cyc.cycle_length, 1)
+                utilization_promises=vector.new(cyc.cycle_length, pow(-1, is_consumer) * i),
+                utilizations=vector.new(cyc.cycle_length, pow(-1, is_consumer) * i)
             )
 
         return data
@@ -111,8 +107,9 @@ class TestIntegration:
         for c, d in client_data.items():
 
             results = []
-            for accepted, rp, tp, fit, cons, sup, td, indiv_dev in zip(
-                d.accepted_flags,
+            for accepted_consumer, accepted_producer, rp, tp, fit, cons, sup, td, indiv_dev in zip(
+                d.accepted_consumer_flags,
+                d.accepted_producer_flags,
                 cyc.retail_prices,
                 cyc.trading_prices,
                 cyc.feed_in_tarifs,
@@ -121,24 +118,30 @@ class TestIntegration:
                 total_deviations,
                 d.individual_deviations,
             ):
-                if accepted:
+                if accepted_consumer:
                     if td == 0:
                         bill = cons * tp
-                        reward = sup * tp
                     if td < 0:
                         if indiv_dev <= 0:
                             bill = cons * tp
                         else:
                             bill = cons * tp + (indiv_dev * (rp - tp))
-                        reward = sup * tp
                     if td > 0:
                         bill = cons * tp
+                else:
+                    bill = cons * rp
+
+                if accepted_producer:
+                    if td == 0:
+                        reward = sup * tp
+                    if td < 0:
+                        reward = sup * tp
+                    if td > 0:
                         if indiv_dev <= 0:
                             reward = sup * tp
                         else:
                             reward = sup * tp + (indiv_dev * (fit - rp))
                 else:
-                    bill = cons * rp
                     reward = sup * fit
 
                 results.append((bill, reward))

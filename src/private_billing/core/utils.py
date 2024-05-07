@@ -90,6 +90,19 @@ class vector(list):
     def __ixor__(self, o) -> vector:
         return self ^ o
 
+    def __or__(self, o) -> vector:
+        # element-wise vector summation, using the xor operation
+        if isinstance(o, vector):
+            assert len(self) == len(o)
+            return vector([a | b for a, b in zip(self, o)])
+        # scalar xor
+        elif isinstance(o, (float, int)):
+            return vector([a | o for a in self])
+        return super().__mod__(o)
+
+    def __ior__(self, o) -> vector:
+        return self | o
+
 
 T = TypeVar("T")
 
@@ -102,3 +115,6 @@ def max_vector(vals: vector[T], o: T) -> vector[T]:
 def get_positive_flags(vals: vector[T]) -> vector[Flag]:
     """Generate a series of flags indicating all positive entries in `vals`."""
     return vector([int(val > 0) for val in vals])
+
+def get_non_zero_flags(vals: vector[T]) -> vector[Flag]:
+    return vector([int(val != 0) for val in vals])
