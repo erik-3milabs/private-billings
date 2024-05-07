@@ -45,7 +45,7 @@ class TestMessageSender:
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(("localhost", 0))
-            address = "localhost", s.getsockname()[1]
+            address = s.getsockname()
             print(f"bound to {address}")
 
             dest = Target(0, address)
@@ -82,7 +82,7 @@ class TestMessageSender:
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(("localhost", 0))
-            address = "localhost", s.getsockname()[1]
+            address = s.getsockname()
             print(f"bound to {address}")
 
             dest = Target(0, address)
@@ -124,7 +124,7 @@ class TestSendIntegration:
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(("localhost", 0))
-            address = "localhost", s.getsockname()[1]
+            address = s.getsockname()
             print(f"bound to {address}")
 
             dest = Target(0, address)

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
 from .core import ClientID, HiddenBill, HiddenData, SEED, CycleContext
-from .server.message_handler import Message, MessageType, Target
+from .server import Message, MessageType, Target, MarketConfig
 
 
 class ValidationException(Exception):
@@ -18,6 +18,7 @@ class BillingMessageType(MessageType):
     DATA = 4
     SEED = 5
     BILL = 6
+    BOOT = 7
 
 
 class UserType(Enum):
@@ -136,5 +137,20 @@ class BillMessage(Message):
     def check_validity(self) -> None:
         try:
             assert isinstance(self.bill, HiddenBill)
+        except AssertionError:
+            raise ValidationException("Invalid bill message")
+
+
+@dataclass
+class BootMessage(Message):
+    market_config: MarketConfig
+
+    @property
+    def type(self) -> BillingMessageType:
+        return BillingMessageType.BOOT
+
+    def check_validity(self) -> None:
+        try:
+            assert isinstance(self.market_config, MarketConfig)
         except AssertionError:
             raise ValidationException("Invalid bill message")
