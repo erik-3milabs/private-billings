@@ -46,6 +46,16 @@ class HiddenData(Serializible):
 
     @staticmethod
     def unmask_data(cycle_data: list[HiddenData]) -> SharedCycleData:
+        """
+        Unmask hidden data.
+
+        :param cycle_data: data that should be combined to be revealed
+        :raises ValueError: when an empty list is provided
+        :return: shared cycle data
+        """
+        if len(cycle_data) == 0:
+            raise ValueError("invalid cycle_data")
+            
         vec_len = len(cycle_data[0].masked_individual_deviations)
         total_deviations = vector.new(vec_len)
         consumer_counts = vector.new(vec_len)
