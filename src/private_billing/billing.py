@@ -86,7 +86,7 @@ class BillingServer(MessageHandler):
     @no_response
     def handle_receive_data(self, msg: DataMessage, sender: Target) -> None:
         # Register data
-        self.data.shared_biller.record_data(msg.data, sender.id)
+        self.data.shared_biller.record_data(msg.data)
 
         # Attempt to start billing process
         cycle_id = msg.data.cycle_id

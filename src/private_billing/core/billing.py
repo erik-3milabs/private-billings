@@ -13,7 +13,7 @@ class SharedBilling:
         self.cycle_contexts: dict[CycleID, CycleContext] = {}
         self.clients: set[ClientID] = set()
 
-    def record_data(self, data: HiddenData, c: ClientID) -> None:
+    def record_data(self, data: HiddenData) -> None:
         """
         Record data for a given client.
 
@@ -21,7 +21,7 @@ class SharedBilling:
         :param c: client to record data for.
         """
         self.client_data.setdefault(data.cycle_id, {})
-        self.client_data.get(data.cycle_id)[c] = data
+        self.client_data.get(data.cycle_id)[data.client] = data
 
     def record_contexts(self, cyc: CycleContext) -> None:
         """

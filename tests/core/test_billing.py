@@ -25,7 +25,7 @@ class TestSharedBillingComputeBills:
         # Record data
         sb = SharedBilling()
         sb.record_contexts(cyc)
-        sb.record_data(hd, hd.client)
+        sb.record_data(hd)
 
         # Do not include client
         # sb.include_client(hd.client) 
@@ -62,7 +62,7 @@ class TestSharedBillingComputeBills:
         # Record data
         sb = SharedBilling()
         sb.record_contexts(cyc)
-        sb.record_data(hd, hd.client)
+        sb.record_data(hd)
         sb.include_client(hd.client)
 
         # Compute bill
@@ -101,7 +101,7 @@ class TestSharedBillingComputeBills:
         # Record data
         sb = SharedBilling()
         sb.record_contexts(cyc)
-        sb.record_data(hd, hd.client)
+        sb.record_data(hd)
         sb.include_client(hd.client)
 
         # Compute bill
@@ -143,7 +143,7 @@ class TestSharedBillingComputeBills:
         # Record data
         sb = SharedBilling()
         sb.record_contexts(cyc)
-        sb.record_data(hd, hd.client)
+        sb.record_data(hd)
         sb.include_client(hd.client)
 
         # Compute bill
@@ -183,7 +183,7 @@ class TestSharedBillingComputeBills:
         # Record data
         sb = SharedBilling()
         sb.record_contexts(cyc)
-        sb.record_data(hd, hd.client)
+        sb.record_data(hd)
         sb.include_client(hd.client)
 
         # Compute bill
