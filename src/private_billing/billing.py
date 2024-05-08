@@ -56,10 +56,8 @@ class BillingServer(MessageHandler):
     def handle_boot(self, msg: BootMessage, sender: Target) -> None:
         """
         Perform boot sequence.
-
         This entails registering with the market operator.
         """
-        print("received boot trigger")
 
         # Register with the market_operator
         mc = msg.market_config
@@ -101,7 +99,7 @@ class BillingServer(MessageHandler):
         for id, client in self.data.participants.items():
             bill = bills[id]
             bill_msg = BillMessage(bill)
-            MessageSender(bill_msg, client)
+            self.send(bill_msg, client)
 
     def register_client(self, client: Target):
         # Register with self
