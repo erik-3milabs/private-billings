@@ -78,12 +78,6 @@ class BillingServer(MessageHandler):
         self.reply(resp)
 
     @no_response
-    def handle_receive_welcome(self, msg: WelcomeMessage, sender: Target) -> None:
-        self.id = msg.id
-        for peer in msg.peers:
-            self.register_client(peer)
-
-    @no_response
     def handle_new_member(self, msg: NewMemberMessage, sender: Target) -> None:
         if msg.member_type != UserType.CLIENT:
             return
