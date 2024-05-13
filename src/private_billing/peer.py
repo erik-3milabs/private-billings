@@ -14,6 +14,7 @@ from .core import (
 )
 from .messages import (
     BillMessage,
+    BootMessage,
     ContextMessage,
     DataMessage,
     HelloMessage,
@@ -31,7 +32,7 @@ from .server import (
     MessageSender,
     Target,
     Singleton,
-    no_response
+    no_response,
 )
 
 
@@ -60,7 +61,7 @@ class PeerDataStore(metaclass=Singleton):
         self.billing_server: Target = None
         self.bills: Dict[CycleID, Bill] = {}
         self.market_config: MarketConfig = None
-    
+
     @property
     def market_operator(self) -> Target:
         address = (self.market_config.market_host, self.market_config.market_port)
@@ -88,29 +89,43 @@ class Peer(MessageHandler):
     def handlers(self):
         return {
             BillingMessageType.BILL: self.handle_receive_bill,
+            BillingMessageType.BOOT: self.handle_boot,
             BillingMessageType.CYCLE_CONTEXT: self.handle_receive_context,
             BillingMessageType.NEW_MEMBER: self.handle_new_member,
             BillingMessageType.SEED: self.handle_receive_seed,
-            BillingMessageType.WELCOME: self.handle_welcome,
         }
 
     # Handlers
 
-    @no_response
-    def handle_welcome(self, msg: WelcomeMessage) -> None:
+    def handle_boot(self, msg: BootMessage, sender: Target) -> None:
+        """
+        Perform boot sequence.
+        This entails registering with the market operator.
+        """
+        # Register with the market_operator
+        mc = msg.market_config
+        market_operator = Target(None, (mc.market_host, mc.market_port))
+        hello_msg = HelloMessage(UserType.CLIENT, self.server.server_address)
+        resp: WelcomeMessage = self.send(hello_msg, market_operator)
+
+        # Store id
+        self.data.id = resp.id
+
         # Set up hiding context with info
-        self._init_hiding_context(msg.cycle_length)
+        self._init_hiding_context(resp.cycle_length)
 
         # Exchange seeds with registered peers
-        for peer in msg.peers:
+        for peer in resp.peers:
             self._include_peer(peer)
+
+        # Forward message to acknowledge boot success
+        self.reply(resp)
 
     @no_response
     def handle_new_member(self, msg: NewMemberMessage, sender: Target) -> None:
         match msg.member_type:
             case UserType.CLIENT:
-                peer = msg.new_member
-                self.data.peers[peer.id] = peer
+                self._include_peer(msg.new_member)
             case UserType.SERVER:
                 self.data.billing_server = msg.new_member
 
@@ -121,18 +136,18 @@ class Peer(MessageHandler):
     @no_response
     def handle_receive_bill(self, msg: BillMessage, sender: Target):
         hb = msg.bill
-        bill = hb.reveal(self.hc)
+        bill = hb.reveal(self.data.hc)
         self.data.bills[bill.cycle_id] = bill
 
     @no_response
-    def handle_receive_context(self, msg: ContextMessage) -> None:
+    def handle_receive_context(self, msg: ContextMessage, sender: Target) -> None:
         context = msg.context
         self.data.context[context.cycle_id] = context
 
     # Private functionality
 
     def _init_hiding_context(self, cycle_length: int) -> None:
-        self.hc = HidingContext(cycle_length, self.data.mg)
+        self.data.hc = HidingContext(cycle_length, self.data.mg)
 
     def _send_seed(self, peer: Target) -> None:
         seed = self.data.mg.get_seed_for_peer(peer.id)
@@ -140,7 +155,8 @@ class Peer(MessageHandler):
         self.send(msg, peer)
 
     def _include_peer(self, peer: Target) -> None:
-        if self.data.mg.has_seed_for_peer(peer):
+        self.data.peers[peer.id] = peer
+        if self.data.mg.has_owned_seed_for_peer(peer):
             return
         self._send_seed(peer)
 
