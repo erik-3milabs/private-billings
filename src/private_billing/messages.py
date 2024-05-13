@@ -1,7 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Tuple
+
+from private_billing.server.message_handler import ADDRESS
 from .core import ClientID, HiddenBill, HiddenData, SEED, CycleContext
 from .server import Message, MessageType, Target, MarketConfig
 
@@ -29,6 +31,7 @@ class UserType(Enum):
 @dataclass
 class HelloMessage(Message):
     user_type: UserType
+    response_address: ADDRESS
 
     @property
     def type(self) -> BillingMessageType:

@@ -48,7 +48,6 @@ class BillingServer(MessageHandler):
     def handlers(self):
         return {
             BillingMessageType.BOOT: self.handle_boot,
-            BillingMessageType.WELCOME: self.handle_receive_welcome,
             BillingMessageType.NEW_MEMBER: self.handle_new_member,
             BillingMessageType.DATA: self.handle_receive_data,
         }
@@ -62,7 +61,7 @@ class BillingServer(MessageHandler):
         # Register with the market_operator
         mc = msg.market_config
         market_operator = Target(None, (mc.market_host, mc.market_port))
-        hello_msg = HelloMessage(UserType.SERVER)
+        hello_msg = HelloMessage(UserType.SERVER, self.server.server_address)
         resp: WelcomeMessage = self.send(hello_msg, market_operator)
 
         # Store id
