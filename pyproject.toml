@@ -26,3 +26,8 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/3MI-Labs/private-billings"
 Issues = "https://github.com/3MI-Labs/private-billings/issues"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
