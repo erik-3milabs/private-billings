@@ -13,7 +13,7 @@ class SharedBilling:
         self.cycle_contexts: dict[CycleID, CycleContext] = {}
         self.clients: set[ClientID] = set()
 
-    def record_data(self, data: HiddenData, c: ClientID) -> None:
+    def record_data(self, data: HiddenData) -> None:
         """
         Record data for a given client.
 
@@ -21,7 +21,7 @@ class SharedBilling:
         :param c: client to record data for.
         """
         self.client_data.setdefault(data.cycle_id, {})
-        self.client_data.get(data.cycle_id)[c] = data
+        self.client_data.get(data.cycle_id)[data.client] = data
 
     def record_contexts(self, cyc: CycleContext) -> None:
         """
@@ -53,14 +53,22 @@ class SharedBilling:
         Compute bills for all clients, for a given cycle.
 
         :param cid: cycle to compute bills for
+        :raises ValueError: when asked to perform billing for a round it is not
+        ready for.
         :return: map of clients and their bills
         """
+        if not self.is_ready(cid):
+            raise ValueError(f"cannot run billing for cycle {cid}")
+            
         # Gather data for the specified cycle
         cycle_data = self.client_data[cid]
         cyc = self.cycle_contexts[cid]
+        
+        # Gather data for clients eligibile to participate in this billing cycle
+        included_cycle_data = [cycle_data[c] for c in self.clients]
 
         # Compute the shared cycle data
-        scd = HiddenData.unmask_data(list(cycle_data.values()))
+        scd = HiddenData.unmask_data(included_cycle_data)
         scd.check_validity(cyc)
 
         bills = {}
@@ -76,8 +84,5 @@ class SharedBilling:
         :param cid: id of cycle for which to check.
         :returns: whether it is possible.
         """
-        is_ready = True
         cycle_data = self.client_data.get(cid, {})
-        for c in self.clients:
-            is_ready &= c in cycle_data
-        return is_ready
+        return all(map(lambda c: c in cycle_data, self.clients)) and len(self.clients) > 0

@@ -78,7 +78,8 @@ class TestIntegration:
         sb = SharedBilling()
         sb.record_contexts(cyc)
         for c, d in hidden_data.items():
-            sb.record_data(d, c)
+            sb.include_client(c)
+            sb.record_data(d)
 
         # Compute bills
         return sb.compute_bills(0)
