@@ -16,7 +16,8 @@ class HiddenData(Serializible):
     :param cycle_id: id of cycle to which this data belongs
     :param consumptions: Encrypted consumption, per timeslot
     :param supplies: Encrypted supply, per timeslot
-    :param accepted_flags: Flags indicating timeslots for which peer-to-peer trading was accepted.
+    :param accepted_consumer_flags: Flags indicating timeslots for peer was accepted to peer-to-peer trade as consumer.
+    :param accepted_producer_flags: Flags indicating timeslots for peer was accepted to peer-to-peer trade as producer.
     :param positive_deviation_flags: Flags indicating timeslots with negative deviation
     :param masked_individual_deviations: Deviation information, masked
     :param masked_p2p_consumer_flags: Flag indicating timeslots in which this user was a p2p consumer, masked.
@@ -28,7 +29,8 @@ class HiddenData(Serializible):
     cycle_id: CycleID
     consumptions: Ciphertext
     supplies: Ciphertext
-    accepted_flags: Ciphertext
+    accepted_consumer_flags: Ciphertext
+    accepted_producer_flags: Ciphertext
     positive_deviation_flags: Ciphertext
     masked_individual_deviations: vector[float]
     masked_p2p_consumer_flags: vector[float]
@@ -82,15 +84,16 @@ class HiddenData(Serializible):
         total_p2p_producers = max_vector(scd.total_p2p_producers, 1.0)
 
         # Create rejected a dual to the accepted mask
-        rejected_flags = self.phc.flip_bits(self.accepted_flags)
+        rejected_consumer_flags = self.phc.flip_bits(self.accepted_consumer_flags)
+        rejected_producer_flags = self.phc.flip_bits(self.accepted_producer_flags)
 
         # CASE: Client not accepted for P2P trading
         #  -> pay retail price for the consumption
         #  -> get feed-in tarif for the production
         bill_no_p2p = self.phc.mult_with_scalar(self.consumptions, cyc.retail_prices)
-        bill_no_p2p = self.phc.multiply_ciphertexts(bill_no_p2p, rejected_flags)
+        bill_no_p2p = self.phc.multiply_ciphertexts(bill_no_p2p, rejected_consumer_flags)
         reward_no_p2p = self.phc.mult_with_scalar(self.supplies, cyc.feed_in_tarifs)
-        reward_no_p2p = self.phc.multiply_ciphertexts(reward_no_p2p, rejected_flags)
+        reward_no_p2p = self.phc.multiply_ciphertexts(reward_no_p2p, rejected_producer_flags)
 
         # CASE: Client was accepted for P2P trading
         base_bill = self.phc.mult_with_scalar(self.consumptions, cyc.trading_prices)
@@ -156,10 +159,10 @@ class HiddenData(Serializible):
 
         # Aggregating the P2P cases
         bill_p2p = base_bill + bill_supplement_ct
-        bill_p2p = self.phc.multiply_ciphertexts(bill_p2p, self.accepted_flags)
+        bill_p2p = self.phc.multiply_ciphertexts(bill_p2p, self.accepted_consumer_flags)
 
         reward_p2p = base_reward + reward_penalty_ct
-        reward_p2p = self.phc.multiply_ciphertexts(reward_p2p, self.accepted_flags)
+        reward_p2p = self.phc.multiply_ciphertexts(reward_p2p, self.accepted_producer_flags)
 
         # Aggregating P2P and no-P2P cases
         bill = bill_p2p + bill_no_p2p
@@ -172,7 +175,8 @@ class HiddenData(Serializible):
         # Prepare object for serialization
         self.__consumptions_serialized = serialize_fhe_obj(self.consumptions)
         self.__supplies_serialized = serialize_fhe_obj(self.supplies)
-        self.__accepted_flags_serialized = serialize_fhe_obj(self.accepted_flags)
+        self.__accepted_consumer_flags_serialized = serialize_fhe_obj(self.accepted_consumer_flags)
+        self.__accepted_producer_flags_serialized = serialize_fhe_obj(self.accepted_producer_flags)
         self.__positive_deviation_flags_serialized = serialize_fhe_obj(
             self.positive_deviation_flags
         )
@@ -181,7 +185,8 @@ class HiddenData(Serializible):
         attributes = self.__dict__.copy()
         del attributes["consumptions"]
         del attributes["supplies"]
-        del attributes["accepted_flags"]
+        del attributes["accepted_consumer_flags"]
+        del attributes["accepted_producer_flags"]
         del attributes["positive_deviation_flags"]
         return attributes
 
@@ -192,7 +197,8 @@ class HiddenData(Serializible):
         # Rebuild objects
         self.consumptions = deserialize_ciphertext(self.__consumptions_serialized)
         self.supplies = deserialize_ciphertext(self.__supplies_serialized)
-        self.accepted_flags = deserialize_ciphertext(self.__accepted_flags_serialized)
+        self.accepted_consumer_flags = deserialize_ciphertext(self.__accepted_consumer_flags_serialized)
+        self.accepted_producer_flags = deserialize_ciphertext(self.__accepted_producer_flags_serialized)
         self.positive_deviation_flags = deserialize_ciphertext(
             self.__positive_deviation_flags_serialized
         )
@@ -200,5 +206,6 @@ class HiddenData(Serializible):
         # Remove placeholders
         del self.__consumptions_serialized
         del self.__supplies_serialized
-        del self.__accepted_flags_serialized
+        del self.__accepted_consumer_flags_serialized
+        del self.__accepted_producer_flags_serialized
         del self.__positive_deviation_flags_serialized

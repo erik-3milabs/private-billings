@@ -143,7 +143,7 @@ class TestBilling:
                 assert msg == ""
 
         # Test input
-        data = Data(0, 1, None, None, None, None, None)
+        data = Data(0, 1, None, None)
         data_msg = DataMessage(data)
         sender = Target(0, ("marker operator address", 2345))
 
@@ -175,7 +175,7 @@ class TestBilling:
                 
 
         # Test input
-        data = Data(client_id, cycle_id, None, None, None, None, None)
+        data = Data(client_id, cycle_id, None, None)
         data_msg = DataMessage(data)
         sender = Target(0, ("marker operator address", 2345))
 
@@ -199,7 +199,7 @@ class TestBilling:
                 self.data.compute_bills_count += 1
                 
         # Test input
-        data = Data(client_id, cycle_id, None, None, None, None, None)        
+        data = Data(client_id, cycle_id, None, None)
 
         # Seed data store        
         bsds = BillingServerDataStore()
