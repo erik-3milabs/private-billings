@@ -23,18 +23,26 @@ class BaseBillingServerMock(BillingServer):
 
         # Store responses and sent messages
         mods = BillingServerDataStore()
-        mods.responses = []
-        mods.sent = []
+        mods.__replies__ = []
+        mods.__sent__ = []
 
     def handle(self) -> None:
         """Not handling anything in this test"""
         pass
 
     def send(self, message: Message, target: Target):
-        self.data.sent.append((message, target))
+        self.data.__sent__.append((message, target))
 
     def reply(self, msg: Message) -> None:
-        self.data.responses.append(msg)
+        self.data.__replies__.append(msg)
+
+    @property
+    def _sent(self):
+        return self.data.__sent__
+
+    @property
+    def _replies(self):
+        return self.data.__replies__
 
 
 def clean_datastore(func, *args, **kwargs):
@@ -84,19 +92,19 @@ class TestBilling:
 
         # Execute test
         response_address = ("some_address", "some_port")
-        MockedBillingServer(response_address).handle_boot(boot, sender)
+        server = MockedBillingServer(response_address)
+        server.handle_boot(boot, sender)
 
         # Check data store is updated accordingly
         bsds = BillingServerDataStore()
         assert bsds.id == welcome.id
         for peer in welcome.peers:
             assert peer in bsds.participants.values()
-            
+
         # Check a message was replied
-        assert len(bsds.responses) == 1
-        response = bsds.responses[0]
+        assert len(server._replies) == 1
+        response = server._replies[0]
         assert response == welcome
-        
 
     @clean_datastore
     def test_handle_new_member_client(self):
@@ -128,15 +136,16 @@ class TestBilling:
 
         # Execute test
         response_address = ("some_address", "some_port")
-        BaseBillingServerMock(response_address).handle_new_member(new_server_msg, sender)
+        server = BaseBillingServerMock(response_address)
+        server.handle_new_member(new_server_msg, sender)
 
         # Check new server is NOT included in data store
         bsds = BillingServerDataStore()
         assert new_server not in bsds.participants.values()
-        
+
         # Check a no-reply was sent
-        assert len(bsds.responses) == 1
-        response = bsds.responses[0]
+        assert len(server._replies) == 1
+        response = server._replies[0]
         assert response == ""
 
     @clean_datastore
@@ -153,15 +162,16 @@ class TestBilling:
 
         # Execute test
         response_address = ("some_address", "some_port")
-        BaseBillingServerMock(response_address).handle_receive_data(data_msg, sender)
+        server = BaseBillingServerMock(response_address)
+        server.handle_receive_data(data_msg, sender)
 
         # Check data is stored under the right id
         bsds = BillingServerDataStore()
         assert bsds.shared_biller.client_data[data.cycle_id][data.client] == data
-        
+
         # Check a no-reply was sent
-        assert len(bsds.responses) == 1
-        response = bsds.responses[0]
+        assert len(server._replies) == 1
+        response = server._replies[0]
         assert response == ""
 
     @clean_datastore
@@ -185,14 +195,15 @@ class TestBilling:
 
         # Execute test
         response_address = ("some_address", "some_port")
-        MockedBillingServer(response_address).handle_receive_data(data_msg, sender)
+        server = MockedBillingServer(response_address)
+        server.handle_receive_data(data_msg, sender)
 
         # Check run_billing is called
         assert bsds.run_billing_count == 1
-        
+
         # Check a no-reply was sent
-        assert len(bsds.responses) == 1
-        response = bsds.responses[0]
+        assert len(server._replies) == 1
+        response = server._replies[0]
         assert response == ""
 
     @clean_datastore
@@ -219,11 +230,12 @@ class TestBilling:
 
         # Execute test
         response_address = ("some_address", "some_port")
-        BaseBillingServerMock(response_address).run_billing(cycle_id)
+        server = BaseBillingServerMock(response_address)
+        server.run_billing(cycle_id)
 
         # Check bill was sent
-        assert len(bsds.sent) == 1
-        msg, sender = bsds.sent[0]
+        assert len(server._sent) == 1
+        msg, sender = server._sent[0]
         assert isinstance(msg, BillMessage)
         bill = msg.bill
         assert bill.cycle_id == bill_cycle_id
