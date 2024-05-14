@@ -77,9 +77,7 @@ class SharedMaskGenerator:
         return set(self.owned_seeds.keys()) == set(self.foreign_seeds.keys())
 
     def get_seed_for_peer(self, c: ClientID) -> SEED:
-        seed = self._generate_random_seed()
-        self.owned_seeds[c] = seed
-        return seed
+        return self.owned_seeds.setdefault(c, self._generate_random_seed())
 
     def has_owned_seed_for_peer(self, c: ClientID) -> bool:
         return c in self.owned_seeds
