@@ -14,15 +14,13 @@ from .messages import (
     BillingMessageType,
 )
 from .server import (
-    IP,
     MarketConfig,
     MessageHandler,
-    Singleton,
     ADDRESS,
 )
 
 
-class MarketOperatorDataStore(metaclass=Singleton):
+class MarketOperatorDataStore:
 
     def __init__(self):
         self.cycle_length: int = -1
@@ -40,7 +38,9 @@ class MarketOperator(MessageHandler):
 
     @property
     def data(self):
-        return MarketOperatorDataStore()
+        if not hasattr(self.server, "data"):
+            self.server.data = MarketOperatorDataStore()
+        return self.server.data
 
     @property
     def handlers(self):
@@ -129,12 +129,14 @@ def launch_market_operator(
     logger.setLevel(logging_level)
 
     # Setup server
-    ds = MarketOperatorDataStore()
-    ds.market_config = market_config
-    ds.cycle_length = 1024
-
-    # Launch
     address = (market_config.market_host, market_config.market_port)
-    logger.info(f"Going live on {address=}")
     with socketserver.TCPServer(address, MarketOperator) as server:
+        # Configure server
+        mods = MarketOperatorDataStore()
+        mods.market_config = market_config
+        mods.cycle_length = 1024
+        server.data = mods
+
+        # Launch
+        logger.info(f"Going live on {address=}")
         server.serve_forever()

@@ -1,6 +1,7 @@
 import logging
 import pickle
 from socketserver import TCPServer
+from threading import Thread
 from typing import Any, Callable, Dict
 from .core import (
     Bill,
@@ -34,7 +35,6 @@ from .server import (
     MessageHandler,
     MessageSender,
     Target,
-    Singleton,
     no_response,
 )
 
@@ -53,7 +53,7 @@ class Communicator:
         self.call_back(msg, sender)
 
 
-class PeerDataStore(metaclass=Singleton):
+class PeerDataStore:
 
     def __init__(self):
         self.id = None
@@ -74,19 +74,10 @@ class PeerDataStore(metaclass=Singleton):
 class Peer(MessageHandler):
 
     @property
-    def data(self):
-        return PeerDataStore()
-
-    @staticmethod
-    def register(mc: MarketConfig) -> None:
-        # Register with the market_operator
-        mo = Target(None, (mc.market_host, mc.market_port))
-        hello_msg = HelloMessage(UserType.CLIENT)
-        resp: WelcomeMessage = MessageSender.send(hello_msg, mo)
-
-        ds = PeerDataStore()
-        ds.id = resp.id
-        ds.billing_server = resp.billing_server
+    def data(self) -> PeerDataStore:
+        if not hasattr(self.server, "data"):
+            self.server.data = PeerDataStore()
+        return self.server.data
 
     @property
     def handlers(self):
@@ -124,7 +115,7 @@ class Peer(MessageHandler):
         # Exchange seeds with registered peers
         for peer in resp.peers:
             self.register_with_peer(peer)
-        
+
         # Register with billing server
         if self.data.billing_server:
             self.register_with_server(self.data.billing_server)
@@ -141,7 +132,7 @@ class Peer(MessageHandler):
         """
         Handle receiving a seed from a peer.
         In this transaction, a different seed is immediately returned.
-        
+
         This message is furthermore used to bootstrap peer-to-peer registration.
         """
         # Consume sent seed
@@ -214,12 +205,14 @@ def launch_peer(
     logger = logging.getLogger(__name__)
     logger.setLevel(logging_level)
 
-    # Register with the market operator
-    PeerDataStore().market_config = market_config
-    Peer.register(market_config)
-
     # Launch server
     address = (ip, market_config.peer_port)
     logger.info(f"Going live on {address=}")
     with TCPServer(address, Peer) as server:
-        server.serve_forever()
+        thread = Thread(target=server.serve_forever)
+        thread.start()
+
+        # Send boot message to server
+        msg = BootMessage(market_config)
+        target = Target(None, address)
+        MessageSender.send(msg, target)

@@ -1,4 +1,7 @@
+from threading import Thread
 from typing import Dict
+
+from private_billing.server.message_handler import MessageSender
 
 from .core import SharedBilling, ClientID, CycleID
 from .peer import Target
@@ -17,15 +20,13 @@ from .server import (
     IP,
     MarketConfig,
     MessageHandler,
-    MessageSender,
-    Singleton,
     no_response,
 )
 from socketserver import TCPServer
 import logging
 
 
-class BillingServerDataStore(metaclass=Singleton):
+class BillingServerDataStore:
 
     def __init__(self) -> None:
         self.shared_biller = SharedBilling()
@@ -43,7 +44,9 @@ class BillingServer(MessageHandler):
 
     @property
     def data(self):
-        return BillingServerDataStore()
+        if not hasattr(self.server, "data"):
+            self.server.data = BillingServerDataStore()
+        return self.server.data
 
     @property
     def handlers(self):
@@ -132,12 +135,20 @@ def launch_billing_server(
     logger = logging.getLogger(__name__)
     logger.setLevel(logging_level)
 
-    # Setup server
-    BillingServerDataStore().market_config = market_config
-    BillingServer.register(market_config)
-
-    # Launch
+    # Launch server
     address = (ip, market_config.billing_port)
     logger.info(f"Going live on {address=}")
     with TCPServer(address, BillingServer) as server:
-        server.serve_forever()
+        # Configure server
+        bsds = BillingServerDataStore()
+        bsds.market_config = market_config
+        server.data = bsds
+        
+        # Start serving
+        thread = Thread(target=server.serve_forever)
+        thread.start()
+
+        # Send boot message to server
+        msg = BootMessage(market_config)
+        target = Target(None, address)
+        MessageSender.send(msg, target)
