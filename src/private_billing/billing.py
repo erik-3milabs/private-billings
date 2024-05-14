@@ -5,7 +5,8 @@ from .peer import Target
 from .messages import (
     BillMessage,
     BootMessage,
-    DataMessage,
+    ContextMessage,
+    HiddenDataMessage,
     HelloMessage,
     BillingMessageType,
     NewMemberMessage,
@@ -48,8 +49,9 @@ class BillingServer(MessageHandler):
     def handlers(self):
         return {
             BillingMessageType.BOOT: self.handle_boot,
+            BillingMessageType.CYCLE_CONTEXT: self.handle_receive_context,
             BillingMessageType.NEW_MEMBER: self.handle_new_member,
-            BillingMessageType.DATA: self.handle_receive_data,
+            BillingMessageType.HIDDEN_DATA: self.handle_receive_data,
         }
 
     def handle_boot(self, msg: BootMessage, sender: Target) -> None:
@@ -82,17 +84,25 @@ class BillingServer(MessageHandler):
         self.record_client(msg.new_member)
 
     @no_response
-    def handle_receive_data(self, msg: DataMessage, sender: Target) -> None:
+    def handle_receive_context(self, msg: ContextMessage, sender: Target) -> None:
+        self.data.shared_biller.record_contexts(msg.context)
+        self.try_run_billing(msg.context.cycle_id)
+
+    @no_response
+    def handle_receive_data(self, msg: HiddenDataMessage, sender: Target) -> None:
         # Register data
         self.data.shared_biller.record_data(msg.data)
 
         # Attempt to start billing process
-        cycle_id = msg.data.cycle_id
+        self.try_run_billing(msg.data.cycle_id)
+
+    def try_run_billing(self, cycle_id: CycleID) -> None:
+        """Attempt to run the billing process for the given cycle"""
         if self.data.shared_biller.is_ready(cycle_id):
-            self.run_billing(cycle_id)
+            self.run_billing(cycle_id)        
 
     def run_billing(self, cycle_id: CycleID) -> None:
-        """Attempt to run the billing process for the given cycle"""
+        """Run the billing process for the given cycle"""
         bills = self.data.shared_biller.compute_bills(cycle_id)
 
         # Return bills to clients
