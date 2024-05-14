@@ -4,7 +4,7 @@ This repository provides a proof-of-concept implementation of the [private billi
 This project enables computing bills and rewards for peers trading energy in a peer-to-peer trading market in such a way that all trading information remains hidden to all parties involved (except the parties owning the data).
 This implementation assumes all parties involved in the billing process fit the honest-but-curious attack-model; all parties follow the protocol, yet are eager to find out private information on the other participants in the trading market.
 
-# Installation
+## Installation
 Installation involves the following steps:
 1. Install OpenFHE-development, following its [installation procedure](https://openfhe-development.readthedocs.io/en/latest/sphinx_rsts/intro/installation/installation.html).
 
@@ -25,5 +25,9 @@ git clone git@github.com:3MI-Labs/private-billings.git
 python3 -m pip install -e private-billings
 ```
 
-## Structure
-The source of the package is found in [here](./src/private_billing/); the test-suite is found [here](./tests).
+## Billing model
+Currently, the repository provides support for the Universal Cost Split billing model.
+More information on this model is provided [here](docs/universal_cost_split.md).
+
+## Protocol
+The messaging protocol employed by the application is explained [here](docs/protocol.md).
