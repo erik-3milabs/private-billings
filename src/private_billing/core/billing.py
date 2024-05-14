@@ -85,4 +85,6 @@ class SharedBilling:
         :returns: whether it is possible.
         """
         cycle_data = self.client_data.get(cid, {})
-        return all(map(lambda c: c in cycle_data, self.clients)) and len(self.clients) > 0
+        all_data_present = all(map(lambda c: c in cycle_data, self.clients)) and len(self.clients) > 0
+        context_present = cid in self.cycle_contexts
+        return all_data_present and context_present
