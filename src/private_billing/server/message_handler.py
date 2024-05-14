@@ -94,6 +94,18 @@ class MessageSender:
             sock.sendall(enc_msg)
 
     @classmethod
+    def recvall(cls, sock: socket.socket, count):
+        """Receive `count` bytes from `sock`."""
+        buf = bytes()
+        while count:
+            newbuf = sock.recv(count)
+            if not newbuf: 
+                return None
+            buf += newbuf
+            count -= len(newbuf)
+        return buf
+
+    @classmethod
     def _receive(cls, sock: socket.socket) -> Optional[Message]:
         # Receive header
         header_bytes = sock.recv(8)
@@ -105,10 +117,7 @@ class MessageSender:
             return None
 
         # Receive message
-        nr_messages = resp_len // 16384 + 1
-        resp_bytes = bytes()
-        for _ in range(nr_messages):
-            resp_bytes += sock.recv(16384)
+        resp_bytes = cls.recvall(sock, resp_len)
         logger.debug("received message")
 
         # Decode
@@ -146,10 +155,10 @@ class MessageHandler(BaseRequestHandler, MessageSender):
 
         # handle message
         try:
-            handler = self.handlers.get(msg.type)
+            handler = self.handlers[msg.type]
             handler(msg, sender)
-        except IndexError:
-            print(f"Recieved message of unknown type `{msg.type}`.")
+        except KeyError:
+            print(f"Recieved message of unknown type `{msg.type}`. Can only handle {self.handlers.keys()}.")
 
     def reply(self, msg: Message) -> None:
         """Send reply."""
