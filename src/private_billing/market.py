@@ -105,9 +105,10 @@ class MarketOperator(MessageHandler):
 
     def handle_distribute_cycle_context(self, msg: ContextMessage, sender: Target) -> None:
         """Forward cycle context to all participants and the billing server."""
-        for peer in self.data.participants:
+        for peer in self.data.participants.values():
             self.send(msg, peer)
-        self.send(msg, self.data.billing_server)
+        if self.data.billing_server:
+            self.send(msg, self.data.billing_server)
 
     def _generate_new_uuid(self) -> ClientID:
         return uuid.uuid4().int
