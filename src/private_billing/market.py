@@ -1,9 +1,8 @@
 import logging
 import socketserver
-from typing import Dict, List, Tuple
+from typing import Dict, List
 import uuid
 
-from private_billing.server.message_handler import ADDRESS
 from .peer import Target
 from .core import CycleContext, CycleID, ClientID
 from .messages import (
@@ -19,6 +18,7 @@ from .server import (
     MarketConfig,
     MessageHandler,
     Singleton,
+    ADDRESS,
 )
 
 
