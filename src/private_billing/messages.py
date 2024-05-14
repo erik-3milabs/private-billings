@@ -1,11 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
-from private_billing.server.message_handler import ADDRESS
-from .core import ClientID, HiddenBill, HiddenData, SEED, CycleContext
-from .server import Message, MessageType, Target, MarketConfig
+from .core import ClientID, HiddenBill, HiddenData, SEED, CycleContext, CycleID, Data
+from .server import Message, MessageType, Target, MarketConfig, ADDRESS
 
 
 class ValidationException(Exception):
@@ -17,10 +16,13 @@ class BillingMessageType(MessageType):
     WELCOME = 1
     NEW_MEMBER = 2
     CYCLE_CONTEXT = 3
-    DATA = 4
-    SEED = 5
-    BILL = 6
-    BOOT = 7
+    GET_CYCLE_CONTEXT = 4
+    DATA = 5
+    HIDDEN_DATA = 6
+    SEED = 7
+    BILL = 8
+    GET_BILL = 9
+    BOOT = 10
 
 
 class UserType(Enum):
@@ -100,12 +102,56 @@ class ContextMessage(Message):
 
 
 @dataclass
+class GetBillMessage(Message):
+    cycle_id: CycleID
+
+    @property
+    def type(self) -> BillingMessageType:
+        return BillingMessageType.GET_BILL
+
+    def check_validity(self) -> None:
+        try:
+            assert isinstance(self.cycle_id, CycleID)
+        except AssertionError:
+            raise ValidationException("Invalid get bill message.")
+
+@dataclass
+class GetContextMessage(Message):
+    cycle_id: CycleID
+
+    @property
+    def type(self) -> BillingMessageType:
+        return BillingMessageType.GET_CYCLE_CONTEXT
+
+    def check_validity(self) -> None:
+        try:
+            assert isinstance(self.cycle_id, CycleID)
+        except AssertionError:
+            raise ValidationException("Invalid get context message.")
+
+
+@dataclass
 class DataMessage(Message):
-    data: HiddenData
+    data: Data
 
     @property
     def type(self) -> BillingMessageType:
         return BillingMessageType.DATA
+
+    def check_validity(self) -> None:
+        try:
+            assert self.data.check_validity()
+        except AssertionError:
+            raise ValidationException("Invalid data message")
+
+
+@dataclass
+class HiddenDataMessage(Message):
+    data: HiddenData
+
+    @property
+    def type(self) -> BillingMessageType:
+        return BillingMessageType.HIDDEN_DATA
 
     def check_validity(self) -> None:
         try:
