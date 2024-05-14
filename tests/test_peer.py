@@ -72,9 +72,10 @@ class TestPeer:
         # Test settings
         sender = Target(0, ("Sender address", 1000))
         mc = MarketConfig("localhost", 5555, 5554, 5553)
+        billing_server = Target(77, sender.address),
         welcome = WelcomeMessage(
             6,
-            Target(6, sender.address),
+            billing_server
             [
                 Target(1, ("localhost", mc.peer_port)),
                 Target(2, ("localhost", mc.peer_port)),
@@ -101,6 +102,7 @@ class TestPeer:
         pds = PeerDataStore()
         assert pds.id == welcome.id
         assert pds.hc != None
+        assert pds.billing_server == billing_server
         assert pds.peers[1] == welcome.peers[0]
         assert pds.peers[2] == welcome.peers[1]
 

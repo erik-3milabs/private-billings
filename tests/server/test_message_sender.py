@@ -8,7 +8,7 @@ from src.private_billing.core import (
     vector,
 )
 from src.private_billing.server import MessageSender, Target
-from src.private_billing.messages import DataMessage, WelcomeMessage
+from src.private_billing.messages import HiddenDataMessage, WelcomeMessage
 from tests.core.tools import are_equal_ciphertexts
 from threading import Thread
 from time import sleep
@@ -71,7 +71,7 @@ class TestMessageSender:
             vector.new(2048, 1),
             vector.new(2048, 2),
         )
-        msg = DataMessage(data)
+        msg = HiddenDataMessage(data)
 
         def send(dest):
             sleep(0.1)
@@ -110,7 +110,7 @@ class TestSendIntegration:
         )
         hd = data.hide(hc)
         hd.phc = None
-        msg = DataMessage(hd)
+        msg = HiddenDataMessage(hd)
 
         def send(dest):
             sleep(0.1)

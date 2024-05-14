@@ -5,7 +5,7 @@ from src.private_billing import BillingServer, BillingServerDataStore
 from src.private_billing.messages import (
     BillMessage,
     BootMessage,
-    DataMessage,
+    HiddenDataMessage,
     HelloMessage,
     Message,
     NewMemberMessage,
@@ -157,7 +157,7 @@ class TestBilling:
 
         # Test input
         data = Data(0, 1, None, None)
-        data_msg = DataMessage(data)
+        data_msg = HiddenDataMessage(data)
         sender = Target(0, ("marker operator address", 2345))
 
         # Execute test
@@ -190,7 +190,7 @@ class TestBilling:
 
         # Test input
         data = Data(client_id, cycle_id, None, None)
-        data_msg = DataMessage(data)
+        data_msg = HiddenDataMessage(data)
         sender = Target(0, ("marker operator address", 2345))
 
         # Execute test
@@ -249,7 +249,7 @@ class TestBilling:
 
         # Execute test
         response_address = ("some_address", "some_port")
-        BaseBillingServerMock(response_address).register_client(client)
+        BaseBillingServerMock(response_address).record_client(client)
 
         # Check client is stored as participant
         bsds = BillingServerDataStore()
