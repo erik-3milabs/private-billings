@@ -69,7 +69,8 @@ class BillingServer(MessageHandler):
 
         # Register clients
         for peer in resp.peers:
-            self.register_client(peer)
+            self.record_client(peer)
+            self.register_with_client(peer)
 
         # Forward message to acknowledge boot success
         self.reply(resp)
@@ -78,7 +79,7 @@ class BillingServer(MessageHandler):
     def handle_new_member(self, msg: NewMemberMessage, sender: Target) -> None:
         if msg.member_type != UserType.CLIENT:
             return
-        self.register_client(msg.new_member)
+        self.record_client(msg.new_member)
 
     @no_response
     def handle_receive_data(self, msg: DataMessage, sender: Target) -> None:
@@ -100,13 +101,18 @@ class BillingServer(MessageHandler):
             bill_msg = BillMessage(bill)
             self.send(bill_msg, client)
 
-    def register_client(self, client: Target):
-        # Register with self
+    def record_client(self, client: Target) -> None:
+        # Record with self
         self.data.participants[client.id] = client
 
-        # Register with the biller
+        # Record with the biller
         self.data.shared_biller.include_client(client.id)
-
+        
+    def register_with_client(self, client: Target) -> None:
+        # Register with the peer
+        self_ = Target(self.data.id, self.server.server_address)
+        new_server = NewMemberMessage(self_, UserType.SERVER)
+        self.send(new_server, client)
 
 def launch_billing_server(
     market_config: MarketConfig, logging_level=logging.DEBUG, ip: IP = "localhost"

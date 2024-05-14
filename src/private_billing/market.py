@@ -76,18 +76,6 @@ class MarketOperator(MessageHandler):
         )
         self.reply(welcome_msg)
 
-        if not is_new:
-            return
-
-        # Send subscribe message to other peers
-        new_subscriber_msg = NewMemberMessage(client, UserType.CLIENT)
-        for peer in peers:
-            self.send(new_subscriber_msg, peer)
-
-        # Send subscribe message to server
-        if self.data.billing_server:
-            self.send(new_subscriber_msg, self.data.billing_server)
-
     def register_new_billing_server(self, response_address: ADDRESS) -> None:
         known_server = self.data.billing_server
         is_new = not known_server or response_address != known_server.address

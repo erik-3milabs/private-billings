@@ -116,20 +116,20 @@ class Peer(MessageHandler):
 
         # Exchange seeds with registered peers
         for peer in resp.peers:
-            self._include_peer(peer)
+            self.register_with_peer(peer)
+        
+        # Register with billing server
+        if self.data.billing_server:
+            self.register_with_server(self.data.billing_server)
 
         # Forward message to acknowledge boot success
         self.reply(resp)
 
     @no_response
     def handle_new_member(self, msg: NewMemberMessage, sender: Target) -> None:
-        match msg.member_type:
-            case UserType.CLIENT:
-                self._include_peer(msg.new_member)
-            case UserType.SERVER:
-                self.data.billing_server = msg.new_member
+        assert msg.member_type == UserType.SERVER
+        self.data.billing_server = msg.new_member
 
-    @no_response
     def handle_receive_seed(self, msg: SeedMessage, sender: Target):
         self.data.mg.consume_foreign_seed(msg.seed, sender.id)
 
@@ -149,16 +149,20 @@ class Peer(MessageHandler):
     def _init_hiding_context(self, cycle_length: int) -> None:
         self.data.hc = HidingContext(cycle_length, self.data.mg)
 
-    def _send_seed(self, peer: Target) -> None:
+    def register_with_peer(self, peer: Target) -> None:
         seed = self.data.mg.get_seed_for_peer(peer.id)
         msg = SeedMessage(seed)
-        self.send(msg, peer)
 
-    def _include_peer(self, peer: Target) -> None:
-        self.data.peers[peer.id] = peer
-        if self.data.mg.has_owned_seed_for_peer(peer):
-            return
-        self._send_seed(peer)
+        logging.debug(f"sending seed... {msg}")
+        resp: SeedMessage = self.send(msg, peer)
+
+        logging.debug(f"receiving seed... {resp}")
+        self.data.mg.consume_foreign_seed(resp.seed, peer.id)
+
+    def register_with_server(self, server: Target) -> None:
+        self_ = Target(self.data.id, self.server.server_address)
+        msg = NewMemberMessage(self_, UserType.CLIENT)
+        self.send(msg, server)
 
     def _send_data(self, data: Data) -> None:
         hidden_data = data.hide(self.hc)
