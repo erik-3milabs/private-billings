@@ -114,6 +114,7 @@ class Peer(MessageHandler):
 
         # Exchange seeds with registered peers
         for peer in resp.peers:
+            self.data.peers[peer.id] = peer
             self.register_with_peer(peer)
 
         # Register with billing server
@@ -135,6 +136,8 @@ class Peer(MessageHandler):
 
         This message is furthermore used to bootstrap peer-to-peer registration.
         """
+        sender.id = msg.owner
+
         # Consume sent seed
         self.data.mg.consume_foreign_seed(msg.seed, sender.id)
 
@@ -143,7 +146,7 @@ class Peer(MessageHandler):
 
         # Return seed
         seed = self.data.mg.get_seed_for_peer(sender.id)
-        msg = SeedMessage(seed)
+        msg = SeedMessage(self.data.id, seed)
         self.reply(msg)
 
     @no_response
@@ -177,7 +180,7 @@ class Peer(MessageHandler):
 
     def register_with_peer(self, peer: Target) -> None:
         seed = self.data.mg.get_seed_for_peer(peer.id)
-        msg = SeedMessage(seed)
+        msg = SeedMessage(self.data.id, seed)
 
         logging.debug(f"sending seed... {msg}")
         resp: SeedMessage = self.send(msg, peer)

@@ -23,15 +23,19 @@ from src.private_billing.server import Target, MarketConfig
 
 
 class BasePeerMock(Peer):
-    def __init__(self, response_address: Tuple[str, int]) -> None:
+    def __init__(
+        self, response_address: Tuple[str, int], data_store: PeerDataStore = None
+    ) -> None:
         """Cutting away communication components."""
         server_mock = Namespace(server_address=response_address)
         super().__init__(None, None, server_mock)
 
         # Store responses and sent messages
-        pds = PeerDataStore()
-        pds.__replies__ = []
-        pds.__sent__ = []
+        if not data_store:
+            data_store = PeerDataStore()
+        data_store.__replies__ = []
+        data_store.__sent__ = []
+        self.server.data = data_store
 
     def handle(self) -> None:
         """Not handling anything in this test"""
@@ -52,43 +56,35 @@ class BasePeerMock(Peer):
         return self.data.__replies__
 
 
-def clean_datastore(func, *args, **kwargs):
-    """
-    Used to indicate this handler will not provide a response.
-    Makes sure to close the socket on the other side.
-    """
-
-    def wrapper(self, *args, **kwargs):
-        PeerDataStore().__init__()  # reset datastore before a test
-        func(self, *args, **kwargs)
-
-    return wrapper
-
-
 class TestPeer:
 
-    @clean_datastore
     def test_handle_registration(self):
         # Test settings
         sender = Target(0, ("Sender address", 1000))
         mc = MarketConfig("localhost", 5555, 5554, 5553)
-        billing_server = Target(77, sender.address),
+        billing_server = Target(77, sender.address)
         welcome = WelcomeMessage(
             6,
-            billing_server
+            billing_server,
             [
                 Target(1, ("localhost", mc.peer_port)),
                 Target(2, ("localhost", mc.peer_port)),
             ],
             1024,
         )
+        seed = SeedMessage(0, 12345)
 
         # Mock some communication elements of BillingServer to keep this a unit test
         class MockedPeerServer(BasePeerMock):
-            def send(cls, message: Message, target: Target):
-                super().send(message, target)
+            def send(cls, msg: Message, target: Target):
+                super().send(msg, target)
+
                 # Return a welcome message (expected behaviour from market operator)
-                return welcome
+                if isinstance(msg, HelloMessage):
+                    return welcome
+
+                if isinstance(msg, SeedMessage):
+                    return seed
 
         # Test input
         boot = BootMessage(mc)
@@ -99,7 +95,7 @@ class TestPeer:
         peer.handle_boot(boot, sender)
 
         # Check data store is updated accordingly
-        pds = PeerDataStore()
+        pds = peer.server.data
         assert pds.id == welcome.id
         assert pds.hc != None
         assert pds.billing_server == billing_server
@@ -111,9 +107,9 @@ class TestPeer:
         response = peer._replies[0]
         assert response == welcome
 
-        # Check three messages were sent
-        assert len(peer._sent) == 3
-        first, second, third = peer._sent
+        # Check four messages were sent
+        assert len(peer._sent) == 4
+        first, second, third, fourth = peer._sent
 
         # first message should have been sent to the market operator
         msg, target = first
@@ -132,48 +128,47 @@ class TestPeer:
         assert msg.seed != None
         assert target == welcome.peers[1]
 
-    @clean_datastore
+        # the fourth is to the billing server
+        msg, target = fourth
+        assert isinstance(msg, NewMemberMessage)
+        assert msg.new_member == Target(welcome.id, response_address)
+        assert msg.member_type == UserType.CLIENT
+
     def test_handle_new_peer(self):
         # Test input
-        market_operator = Target(None, ("some address", "some port"))
         new_peer = Target(77, ("new peer address", "new peer port"))
-        new_member = NewMemberMessage(new_peer, UserType.CLIENT)
+        seed_msg = SeedMessage(77, 1234)
 
         # Execute test
         response_address = ("another address", "another port")
         peer = BasePeerMock(response_address)
-        peer.handle_new_member(new_member, market_operator)
+        peer.handle_receive_seed(seed_msg, new_peer)
 
         # Check data store is updated accordingly
-        pds = PeerDataStore()
+        pds = peer.server.data
         assert pds.peers[new_peer.id] == new_peer
 
         # Check a no-reply was returned
         assert len(peer._replies) == 1
         response = peer._replies[0]
-        assert response == ""
+        assert isinstance(response, SeedMessage)
 
-        # Check a message was sent to that peer
-        assert len(peer._sent) == 1
-        msg, target = peer._sent[0]
-        assert target == new_peer
-        assert isinstance(msg, SeedMessage)
-        assert msg.seed != None
+        # Check no messages were sent
+        assert len(peer._sent) == 0
 
-    @clean_datastore
     def test_handle_new_server(self):
         # Test input
-        market_operator = Target(None, ("some address", "some port"))
+        billing_server = Target(None, ("some address", "some port"))
         new_server = Target(77, ("new server address", "new server port"))
         new_member = NewMemberMessage(new_server, UserType.SERVER)
 
         # Execute test
         response_address = ("another address", "another port")
         peer = BasePeerMock(response_address)
-        peer.handle_new_member(new_member, market_operator)
+        peer.handle_new_member(new_member, billing_server)
 
         # Check data store is updated accordingly
-        pds = PeerDataStore()
+        pds = peer.server.data
         assert pds.billing_server == new_server
 
         # Check a no-reply was returned
@@ -184,11 +179,10 @@ class TestPeer:
         # Check no messages were sent
         assert len(peer._sent) == 0
 
-    @clean_datastore
     def test_handle_receive_seed(self):
         # Test input
         peer = Target(77, ("some address", "some port"))
-        new_seed = SeedMessage(5555)
+        new_seed = SeedMessage(77, 5555)
 
         # Execute test
         response_address = ("another address", "another port")
@@ -196,18 +190,18 @@ class TestPeer:
         peer_server.handle_receive_seed(new_seed, peer)
 
         # Check data store is updated accordingly
-        pds = PeerDataStore()
+        pds = peer_server.server.data
         assert pds.mg.has_foreign_seed_from_peer(peer.id)
 
         # Check a no-reply was returned
         assert len(peer_server._replies) == 1
         response = peer_server._replies[0]
-        assert response == ""
+        assert isinstance(response, SeedMessage)
+        assert response.seed != None
 
         # Check no messages were sent
         assert len(peer_server._sent) == 0
 
-    @clean_datastore
     def test_handle_receive_bill(self):
         class HiddenBillMock(HiddenBill):
             def reveal(self, hc: HidingContext):
@@ -223,7 +217,7 @@ class TestPeer:
         peer_server.handle_receive_bill(bill, billing_server)
 
         # Check data store is updated accordingly
-        pds = PeerDataStore()
+        pds = peer_server.server.data
         assert Bill(0, "test1", "test2") in pds.bills.values()
 
         # Check a no-reply was returned
@@ -234,7 +228,6 @@ class TestPeer:
         # Check no messages were sent
         assert len(peer_server._sent) == 0
 
-    @clean_datastore
     def test_handle_receive_context(self):
         # Test input
         market_operator = Target(None, ("some address", "some port"))
@@ -249,7 +242,7 @@ class TestPeer:
         peer.handle_receive_context(context_msg, market_operator)
 
         # Check data store is updated accordingly
-        pds = PeerDataStore()
+        pds = peer.server.data
         assert cyc in pds.context.values()
 
         # Check a no-reply was returned

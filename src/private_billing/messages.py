@@ -162,6 +162,7 @@ class HiddenDataMessage(Message):
 
 @dataclass
 class SeedMessage(Message):
+    owner: ClientID
     seed: SEED
 
     @property
