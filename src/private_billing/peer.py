@@ -116,6 +116,7 @@ class Peer(MessageHandler):
 
         # Store id
         self.data.id = resp.id
+        self.data.billing_server = resp.billing_server
 
         # Set up hiding context with info
         self._init_hiding_context(resp.cycle_length)
