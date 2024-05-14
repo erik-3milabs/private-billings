@@ -17,6 +17,9 @@ from .messages import (
     BootMessage,
     ContextMessage,
     DataMessage,
+    GetBillMessage,
+    GetContextMessage,
+    HiddenDataMessage,
     HelloMessage,
     Message,
     BillingMessageType,
@@ -89,8 +92,11 @@ class Peer(MessageHandler):
     def handlers(self):
         return {
             BillingMessageType.BILL: self.handle_receive_bill,
+            BillingMessageType.GET_BILL: self.handle_get_bill,
             BillingMessageType.BOOT: self.handle_boot,
             BillingMessageType.CYCLE_CONTEXT: self.handle_receive_context,
+            BillingMessageType.GET_CYCLE_CONTEXT: self.handle_get_context,
+            BillingMessageType.DATA: self.handle_receive_data,
             BillingMessageType.NEW_MEMBER: self.handle_new_member,
             BillingMessageType.SEED: self.handle_receive_seed,
         }
@@ -131,7 +137,22 @@ class Peer(MessageHandler):
         self.data.billing_server = msg.new_member
 
     def handle_receive_seed(self, msg: SeedMessage, sender: Target):
+        """
+        Handle receiving a seed from a peer.
+        In this transaction, a different seed is immediately returned.
+        
+        This message is furthermore used to bootstrap peer-to-peer registration.
+        """
+        # Consume sent seed
         self.data.mg.consume_foreign_seed(msg.seed, sender.id)
+
+        # Register peer
+        self.data.peers[sender.id] = sender
+
+        # Return seed
+        seed = self.data.mg.get_seed_for_peer(sender.id)
+        msg = SeedMessage(seed)
+        self.reply(msg)
 
     @no_response
     def handle_receive_bill(self, msg: BillMessage, sender: Target):
@@ -143,6 +164,19 @@ class Peer(MessageHandler):
     def handle_receive_context(self, msg: ContextMessage, sender: Target) -> None:
         context = msg.context
         self.data.context[context.cycle_id] = context
+
+    def handle_get_context(self, msg: GetContextMessage, sender: Target) -> None:
+        context = self.data.context.get(msg.cycle_id, None)
+        self.reply(ContextMessage(context))
+
+    def handle_get_bill(self, msg: GetBillMessage, sender: Target) -> None:
+        bill = self.data.bills.get(msg.cycle_id, None)
+        self.reply(BillMessage(bill))
+
+    @no_response
+    def handle_receive_data(self, msg: DataMessage, sender: Target) -> None:
+        # encrypt and forward data to server
+        self._send_data(msg.data)
 
     # Private functionality
 
@@ -165,8 +199,9 @@ class Peer(MessageHandler):
         self.send(msg, server)
 
     def _send_data(self, data: Data) -> None:
-        hidden_data = data.hide(self.hc)
-        msg = DataMessage(hidden_data)
+        hidden_data = data.hide(self.data.hc)
+        hidden_data.client = self.data.id
+        msg = HiddenDataMessage(hidden_data)
         self.send(msg, self.data.billing_server)
 
 
