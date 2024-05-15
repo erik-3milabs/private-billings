@@ -20,6 +20,7 @@ from .server import (
     IP,
     MarketConfig,
     MessageHandler,
+    Signer,
     no_response,
 )
 from socketserver import TCPServer
@@ -33,6 +34,7 @@ class BillingServerDataStore:
         self.id: ClientID = None
         self.market_config: MarketConfig = None
         self.participants: Dict[ClientID, Target] = {}
+        self.signer = Signer()
 
     @property
     def market_operator(self):
@@ -102,7 +104,7 @@ class BillingServer(MessageHandler):
     def try_run_billing(self, cycle_id: CycleID) -> None:
         """Attempt to run the billing process for the given cycle"""
         if self.data.shared_biller.is_ready(cycle_id):
-            self.run_billing(cycle_id)        
+            self.run_billing(cycle_id)
 
     def run_billing(self, cycle_id: CycleID) -> None:
         """Run the billing process for the given cycle"""
@@ -111,7 +113,8 @@ class BillingServer(MessageHandler):
         # Return bills to clients
         for id, client in self.data.participants.items():
             bill = bills[id]
-            bill_msg = BillMessage(bill)
+            signature = self.data.signer.sign(bill)
+            bill_msg = BillMessage(bill, signature)
             self.send(bill_msg, client)
 
     def record_client(self, client: Target) -> None:
@@ -120,7 +123,7 @@ class BillingServer(MessageHandler):
 
         # Record with the biller
         self.data.shared_biller.include_client(client.id)
-        
+
     def register_with_client(self, client: Target) -> None:
         # Register with the peer
         self_ = Target(self.data.id, self.server.server_address)

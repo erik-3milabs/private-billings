@@ -179,6 +179,7 @@ class SeedMessage(Message):
 @dataclass
 class BillMessage(Message):
     bill: HiddenBill
+    signature: bytes
 
     @property
     def type(self) -> BillingMessageType:

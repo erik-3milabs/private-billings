@@ -1,8 +1,11 @@
 from argparse import Namespace
-from private_billing.core.cycle import CycleContext
-from private_billing.core.utils import vector
-from src.private_billing.server.message_handler import ADDRESS
-from src.private_billing.core import HiddenBill, Data
+from src.private_billing.core import (
+    CycleContext,
+    HiddenBill,
+    HidingContext,
+    Data,
+    vector,
+)
 from src.private_billing import BillingServer, BillingServerDataStore
 from src.private_billing.messages import (
     BillMessage,
@@ -14,7 +17,7 @@ from src.private_billing.messages import (
     UserType,
     WelcomeMessage,
 )
-from src.private_billing.server import Target, MarketConfig
+from src.private_billing.server import Target, MarketConfig, ADDRESS
 
 
 class BaseBillingServerMock(BillingServer):
@@ -239,9 +242,12 @@ class TestBilling:
         bsds.shared_biller.record_contexts(cyc)
 
         # Mock sharedbilling compute bills
+        test_hc = HidingContext(1024, None)
+        enc_bill = test_hc.encrypt(vector.new(1024, 5))
+        enc_reward = test_hc.encrypt(vector.new(1024, -6))
         def compute_bills_mock(cid):
             assert cid == cycle_id
-            return {client_id: HiddenBill(bill_cycle_id, "test1", "test2")}
+            return {client_id: HiddenBill(bill_cycle_id, enc_bill, enc_reward)}
 
         bsds.shared_biller.compute_bills = compute_bills_mock
 
@@ -256,8 +262,12 @@ class TestBilling:
         assert isinstance(msg, BillMessage)
         bill = msg.bill
         assert bill.cycle_id == bill_cycle_id
-        assert bill.hidden_bill == "test1"
-        assert bill.hidden_reward == "test2"
+        assert bill.hidden_bill == enc_bill
+        assert bill.hidden_reward == enc_reward
+
+        # Check bill signature
+        public_key = bsds.signer.get_transferable_public_key()
+        bsds.signer.verify(bill, msg.signature, public_key)
 
     def test_register_client(self):
         # Mock
