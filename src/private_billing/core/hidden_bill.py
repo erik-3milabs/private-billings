@@ -2,6 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import pickle
 from typing import Any
+
+from .utils import vector
 from .cycle import CycleID
 from .serialize import (
     DeserializationOption,
@@ -27,8 +29,8 @@ class HiddenBill(Serializible):
         reward = hc.decrypt(self.hidden_reward)
 
         # remove noise
-        bill = [round(b, 5) for b in bill]
-        reward = [round(r, 5) for r in reward]
+        bill = vector([round(b, 5) for b in bill])
+        reward = vector([round(r, 5) for r in reward])
 
         return Bill(self.cycle_id, bill, reward)
 
