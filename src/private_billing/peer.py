@@ -1,8 +1,7 @@
 import logging
-import pickle
 from socketserver import TCPServer
 from threading import Thread
-from typing import Any, Callable, Dict
+from typing import Any, Dict
 from .core import (
     Bill,
     ClientID,
@@ -22,7 +21,6 @@ from .messages import (
     GetContextMessage,
     HiddenDataMessage,
     HelloMessage,
-    Message,
     BillingMessageType,
     NewMemberMessage,
     SeedMessage,
@@ -39,20 +37,6 @@ from .server import (
     TransferablePublicKey,
     no_response,
 )
-
-
-class Communicator:
-
-    def __init__(self, call_back: Callable[[Message, Target], Any]):
-        self.call_back = call_back
-
-    def send(self, msg: Message, target: Target) -> None:
-        msg_bytes = pickle.dumps(msg)
-        target.send(target, msg_bytes)
-
-    def receive(self, msg_bytes: bytes, sender: Target) -> None:
-        msg = pickle.loads(msg_bytes)
-        self.call_back(msg, sender)
 
 
 class PeerDataStore:
