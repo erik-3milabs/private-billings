@@ -89,7 +89,7 @@ class BillingServer(MessageHandler):
 
         # Record client information
         self.record_client(msg.new_member)
-        public_key = self.data.signer.public_key
+        public_key = self.data.signer.get_transferable_public_key()
         self_ = Target(self.data.id, self.server.server_address)
         self.reply(NewMemberMessage(self_, UserType.SERVER, public_key))
 

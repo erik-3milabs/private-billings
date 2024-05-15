@@ -180,7 +180,7 @@ class Peer(MessageHandler):
 
     def handle_get_bill(self, msg: GetBillMessage, sender: Target) -> None:
         bill = self.data.bills.get(msg.cycle_id, None)
-        self.reply(BillMessage(bill))
+        self.reply(BillMessage(bill, None))
 
     @no_response
     def handle_receive_data(self, msg: DataMessage, sender: Target) -> None:
