@@ -19,7 +19,7 @@ from src.private_billing.messages import (
     UserType,
     WelcomeMessage,
 )
-from src.private_billing.server import Target, MarketConfig
+from src.private_billing.server import Target, MarketConfig, Signer
 
 
 class BasePeerMock(Peer):
@@ -218,9 +218,18 @@ class TestPeer:
         billing_server = Target(77, ("some address", "some port"))
         bill = BillMessage(HiddenBillMock(0, "test1", "test2"), None)
 
+        # Mock signature verification
+        pds = PeerDataStore()
+        pds.verify_call_cnt = 0
+
+        class PeerMock(BasePeerMock):
+            def verify_signature(self, obj, sig, key):
+                self.data.verify_call_cnt += 1
+                return True
+
         # Execute test
         response_address = ("another address", "another port")
-        peer_server = BasePeerMock(response_address)
+        peer_server = PeerMock(response_address, pds)
         peer_server.handle_receive_bill(bill, billing_server)
 
         # Check data store is updated accordingly
@@ -234,6 +243,9 @@ class TestPeer:
 
         # Check no messages were sent
         assert len(peer_server._sent) == 0
+
+        # Check signature is verified
+        assert peer_server.server.data.verify_call_cnt > 0
 
     def test_handle_receive_context(self):
         # Test input
@@ -259,3 +271,24 @@ class TestPeer:
 
         # Check no messages were sent
         assert len(peer._sent) == 0
+
+    def test_verify_signature(self):
+        response_address = ("some address", "some port")
+        peer = BasePeerMock(response_address)
+        
+        # Test correct
+        obj = "some obj"
+        signer = Signer()
+        sig = signer.sign(obj)
+        key = signer.get_transferable_public_key()
+        assert peer.verify_signature(obj, sig, key)
+        
+        # Test incorrect
+        other_obj = "some other obj"
+        assert peer.verify_signature(other_obj, sig, key) == False
+        
+        other_sig = signer.sign(other_obj)
+        assert peer.verify_signature(obj, other_sig, key) == False
+        
+        other_key = Signer().get_transferable_public_key()
+        assert peer.verify_signature(obj, sig, other_key) == False

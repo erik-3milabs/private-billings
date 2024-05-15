@@ -39,6 +39,10 @@ class TransferablePublicKey:
                 return serialization.load_der_public_key(self.public_key_bytes)
             case _:
                 return NotImplementedError("")
+            
+    def verify_signature(self, obj: Any, signature):
+        """Verify a signature on an object under this key."""
+        Signer.verify(obj, signature, self)
 
 
 class Signer:

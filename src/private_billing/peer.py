@@ -34,6 +34,7 @@ from .server import (
     MarketConfig,
     MessageHandler,
     MessageSender,
+    Signature,
     Target,
     TransferablePublicKey,
     no_response,
@@ -154,8 +155,18 @@ class Peer(MessageHandler):
 
     @no_response
     def handle_receive_bill(self, msg: BillMessage, sender: Target):
-        hb = msg.bill
-        bill = hb.reveal(self.data.hc)
+        # Check signature
+        verification_key = self.data.server_public_key
+        is_valid = self.verify_signature(msg.bill, msg.signature, verification_key)
+
+        # Discard invalid messages
+        if not is_valid:
+            return
+
+        # Decrypt bill
+        bill = msg.bill.reveal(self.data.hc)
+
+        # Store result
         self.data.bills[bill.cycle_id] = bill
 
     @no_response
@@ -202,6 +213,23 @@ class Peer(MessageHandler):
         hidden_data.client = self.data.id
         msg = HiddenDataMessage(hidden_data)
         self.send(msg, self.data.billing_server)
+
+    def verify_signature(
+        self, obj: Any, signature: Signature, key: TransferablePublicKey
+    ) -> bool:
+        """
+        Verify a signature is correct
+
+        :param obj: object to check signature for
+        :param signature: signature to check
+        :param key: key to check signature against
+        :return: whether signature is valid
+        """
+        try:
+            key.verify_signature(obj, signature)
+            return True
+        except:
+            return False
 
 
 def launch_peer(
