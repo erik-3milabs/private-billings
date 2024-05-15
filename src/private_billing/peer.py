@@ -35,6 +35,7 @@ from .server import (
     MessageHandler,
     MessageSender,
     Target,
+    TransferablePublicKey,
     no_response,
 )
 
@@ -62,6 +63,7 @@ class PeerDataStore:
         self.context: Dict[CycleID, CycleContext] = {}
         self.peers: Dict[ClientID, Target] = {}
         self.billing_server: Target = None
+        self.server_public_key: TransferablePublicKey = None
         self.bills: Dict[CycleID, Bill] = {}
         self.market_config: MarketConfig = None
 
@@ -128,6 +130,7 @@ class Peer(MessageHandler):
     def handle_new_member(self, msg: NewMemberMessage, sender: Target) -> None:
         assert msg.member_type == UserType.SERVER
         self.data.billing_server = msg.new_member
+        self.data.server_public_key = msg.public_key
 
     def handle_receive_seed(self, msg: SeedMessage, sender: Target):
         """
@@ -191,7 +194,8 @@ class Peer(MessageHandler):
     def register_with_server(self, server: Target) -> None:
         self_ = Target(self.data.id, self.server.server_address)
         msg = NewMemberMessage(self_, UserType.CLIENT)
-        self.send(msg, server)
+        resp: NewMemberMessage = self.send(msg, server)
+        self.data.server_public_key = resp.public_key
 
     def _send_data(self, data: Data) -> None:
         hidden_data = data.hide(self.data.hc)

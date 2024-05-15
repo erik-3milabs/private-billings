@@ -82,11 +82,16 @@ class BillingServer(MessageHandler):
         # Forward message to acknowledge boot success
         self.reply(resp)
 
-    @no_response
     def handle_new_member(self, msg: NewMemberMessage, sender: Target) -> None:
         if msg.member_type != UserType.CLIENT:
+            self.reply("")
             return
+
+        # Record client information
         self.record_client(msg.new_member)
+        public_key = self.data.signer.public_key
+        self_ = Target(self.data.id, self.server.server_address)
+        self.reply(NewMemberMessage(self_, UserType.SERVER, public_key))
 
     @no_response
     def handle_receive_context(self, msg: ContextMessage, sender: Target) -> None:
@@ -127,7 +132,8 @@ class BillingServer(MessageHandler):
     def register_with_client(self, client: Target) -> None:
         # Register with the peer
         self_ = Target(self.data.id, self.server.server_address)
-        new_server = NewMemberMessage(self_, UserType.SERVER)
+        public_key = self.data.signer.get_transferable_public_key()
+        new_server = NewMemberMessage(self_, UserType.SERVER, public_key)
         self.send(new_server, client)
 
 def launch_billing_server(

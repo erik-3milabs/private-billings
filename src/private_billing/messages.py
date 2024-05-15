@@ -73,6 +73,7 @@ class WelcomeMessage(Message):
 class NewMemberMessage(Message):
     new_member: Target
     member_type: UserType
+    public_key: Optional[bytes] = None
 
     @property
     def type(self) -> BillingMessageType:

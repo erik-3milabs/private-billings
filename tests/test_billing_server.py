@@ -117,8 +117,11 @@ class TestBilling:
         class MockedBillingServer(BaseBillingServerMock):
             def reply(self, msg: Message) -> None:
                 """Test reply message"""
-                # Should send a "no-reply"
-                assert msg == ""
+                # Should send a NewMemberMessage
+                assert isinstance(msg, NewMemberMessage)
+                assert isinstance(msg.new_member, Target)
+                assert msg.member_type == UserType.SERVER
+                assert msg.public_key != None
 
         # Test input
         new_member = Target(5, ("new member address", 1234))

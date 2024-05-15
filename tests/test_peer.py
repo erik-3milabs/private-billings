@@ -73,6 +73,7 @@ class TestPeer:
             1024,
         )
         seed = SeedMessage(0, 12345)
+        server_info = NewMemberMessage(billing_server, UserType.SERVER, "public key")
 
         # Mock some communication elements of BillingServer to keep this a unit test
         class MockedPeerServer(BasePeerMock):
@@ -85,6 +86,9 @@ class TestPeer:
 
                 if isinstance(msg, SeedMessage):
                     return seed
+                
+                if isinstance(msg, NewMemberMessage):
+                    return server_info
 
         # Test input
         boot = BootMessage(mc)
@@ -133,6 +137,9 @@ class TestPeer:
         assert isinstance(msg, NewMemberMessage)
         assert msg.new_member == Target(welcome.id, response_address)
         assert msg.member_type == UserType.CLIENT
+        
+        # Check public key was recorded
+        assert pds.server_public_key == server_info.public_key
 
     def test_handle_new_peer(self):
         # Test input
@@ -209,7 +216,7 @@ class TestPeer:
 
         # Test input
         billing_server = Target(77, ("some address", "some port"))
-        bill = BillMessage(HiddenBillMock(0, "test1", "test2"))
+        bill = BillMessage(HiddenBillMock(0, "test1", "test2"), None)
 
         # Execute test
         response_address = ("another address", "another port")
