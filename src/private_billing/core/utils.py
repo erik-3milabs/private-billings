@@ -116,5 +116,6 @@ def get_positive_flags(vals: vector[T]) -> vector[Flag]:
     """Generate a series of flags indicating all positive entries in `vals`."""
     return vector([int(val > 0) for val in vals])
 
+
 def get_non_zero_flags(vals: vector[T]) -> vector[Flag]:
     return vector([int(val != 0) for val in vals])

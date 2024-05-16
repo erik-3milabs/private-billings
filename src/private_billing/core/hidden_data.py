@@ -57,7 +57,7 @@ class HiddenData(Pickleable):
         """
         if len(cycle_data) == 0:
             raise ValueError("invalid cycle_data")
-            
+
         vec_len = len(cycle_data[0].masked_individual_deviations)
         total_deviations = vector.new(vec_len)
         consumer_counts = vector.new(vec_len)
@@ -91,9 +91,13 @@ class HiddenData(Pickleable):
         #  -> pay retail price for the consumption
         #  -> get feed-in tarif for the production
         bill_no_p2p = self.phc.mult_with_scalar(self.consumptions, cyc.retail_prices)
-        bill_no_p2p = self.phc.multiply_ciphertexts(bill_no_p2p, rejected_consumer_flags)
+        bill_no_p2p = self.phc.multiply_ciphertexts(
+            bill_no_p2p, rejected_consumer_flags
+        )
         reward_no_p2p = self.phc.mult_with_scalar(self.supplies, cyc.feed_in_tarifs)
-        reward_no_p2p = self.phc.multiply_ciphertexts(reward_no_p2p, rejected_producer_flags)
+        reward_no_p2p = self.phc.multiply_ciphertexts(
+            reward_no_p2p, rejected_producer_flags
+        )
 
         # CASE: Client was accepted for P2P trading
         base_bill = self.phc.mult_with_scalar(self.consumptions, cyc.trading_prices)
@@ -162,11 +166,12 @@ class HiddenData(Pickleable):
         bill_p2p = self.phc.multiply_ciphertexts(bill_p2p, self.accepted_consumer_flags)
 
         reward_p2p = base_reward + reward_penalty_ct
-        reward_p2p = self.phc.multiply_ciphertexts(reward_p2p, self.accepted_producer_flags)
+        reward_p2p = self.phc.multiply_ciphertexts(
+            reward_p2p, self.accepted_producer_flags
+        )
 
         # Aggregating P2P and no-P2P cases
         bill = bill_p2p + bill_no_p2p
         reward = reward_p2p + reward_no_p2p
 
         return HiddenBill(self.cycle_id, bill, reward)
-

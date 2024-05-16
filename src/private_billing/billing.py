@@ -136,6 +136,7 @@ class BillingServer(MessageHandler):
         new_server = NewMemberMessage(self_, UserType.SERVER, public_key)
         self.send(new_server, client)
 
+
 def launch_billing_server(
     market_config: MarketConfig, logging_level=logging.DEBUG, ip: IP = "localhost"
 ) -> None:
@@ -152,7 +153,7 @@ def launch_billing_server(
         bsds = BillingServerDataStore()
         bsds.market_config = market_config
         server.data = bsds
-        
+
         # Start serving
         thread = Thread(target=server.serve_forever)
         thread.start()

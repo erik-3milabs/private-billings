@@ -15,7 +15,7 @@ class Data:
     :param cycle_id: id of the cycle during which this data was gathered.
     :param utilization_promise: promise to utilize a certain amount of energy.
     :param utilization: the actual energy utilization.
-    
+
     Note:
     - a positive utilization (promise) indicates (a) consumption (promise),
     - a negative utilization (promise) indicates (a) supply (promise),

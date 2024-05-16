@@ -51,13 +51,13 @@ class TestIntegration:
     def generate_data(self, client_ids, cyc: CycleContext):
         data = {}
         for i, c in enumerate(client_ids):
-            is_consumer: Flag = c % 2 == 0
+            is_consumer = pow(-1, c % 2 == 0)
 
             data[c] = Data(
                 client=c,
                 cycle_id=0,
-                utilization_promises=vector.new(cyc.cycle_length, pow(-1, is_consumer) * i),
-                utilizations=vector.new(cyc.cycle_length, pow(-1, is_consumer) * i)
+                utilization_promises=vector.new(cyc.cycle_length, is_consumer * i),
+                utilizations=vector.new(cyc.cycle_length, is_consumer * i),
             )
 
         return data
@@ -108,7 +108,17 @@ class TestIntegration:
         for c, d in client_data.items():
 
             results = []
-            for accepted_consumer, accepted_producer, rp, tp, fit, cons, sup, td, indiv_dev in zip(
+            for (
+                accepted_consumer,
+                accepted_producer,
+                rp,
+                tp,
+                fit,
+                cons,
+                sup,
+                td,
+                indiv_dev,
+            ) in zip(
                 d.accepted_consumer_flags,
                 d.accepted_producer_flags,
                 cyc.retail_prices,

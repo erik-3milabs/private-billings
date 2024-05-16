@@ -1,6 +1,11 @@
 import itertools
 import pytest
-from src.private_billing.core import SharedMaskGenerator, ClientID, Int64ToFloatConvertor, vector
+from src.private_billing.core import (
+    SharedMaskGenerator,
+    ClientID,
+    Int64ToFloatConvertor,
+    vector,
+)
 from .tools import get_test_convertor
 
 

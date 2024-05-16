@@ -116,6 +116,7 @@ class GetBillMessage(Message):
         except AssertionError:
             raise ValidationException("Invalid get bill message.")
 
+
 @dataclass
 class GetContextMessage(Message):
     cycle_id: CycleID

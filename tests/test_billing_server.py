@@ -248,6 +248,7 @@ class TestBilling:
         test_hc = HidingContext(1024, None)
         enc_bill = test_hc.encrypt(vector.new(1024, 5))
         enc_reward = test_hc.encrypt(vector.new(1024, -6))
+
         def compute_bills_mock(cid):
             assert cid == cycle_id
             return {client_id: HiddenBill(bill_cycle_id, enc_bill, enc_reward)}

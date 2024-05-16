@@ -103,7 +103,9 @@ class MarketOperator(MessageHandler):
             new_server_msg = NewMemberMessage(server, UserType.SERVER)
             self.send(new_server_msg, peer)
 
-    def handle_distribute_cycle_context(self, msg: ContextMessage, sender: Target) -> None:
+    def handle_distribute_cycle_context(
+        self, msg: ContextMessage, sender: Target
+    ) -> None:
         """Forward cycle context to all participants and the billing server."""
         for peer in self.data.participants.values():
             self.send(msg, peer)

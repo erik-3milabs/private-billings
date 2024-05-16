@@ -145,8 +145,12 @@ class TestSendIntegration:
         # Check ciphertexts are identical
         assert are_equal_ciphertexts(rcvd_hd.consumptions, hd.consumptions, hc)
         assert are_equal_ciphertexts(rcvd_hd.supplies, hd.supplies, hc)
-        assert are_equal_ciphertexts(rcvd_hd.accepted_consumer_flags, hd.accepted_consumer_flags, hc)
-        assert are_equal_ciphertexts(rcvd_hd.accepted_producer_flags, hd.accepted_producer_flags, hc)
+        assert are_equal_ciphertexts(
+            rcvd_hd.accepted_consumer_flags, hd.accepted_consumer_flags, hc
+        )
+        assert are_equal_ciphertexts(
+            rcvd_hd.accepted_producer_flags, hd.accepted_producer_flags, hc
+        )
         assert are_equal_ciphertexts(
             rcvd_hd.positive_deviation_flags, hd.positive_deviation_flags, hc
         )

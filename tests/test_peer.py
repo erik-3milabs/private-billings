@@ -86,7 +86,7 @@ class TestPeer:
 
                 if isinstance(msg, SeedMessage):
                     return seed
-                
+
                 if isinstance(msg, NewMemberMessage):
                     return server_info
 
@@ -137,7 +137,7 @@ class TestPeer:
         assert isinstance(msg, NewMemberMessage)
         assert msg.new_member == Target(welcome.id, response_address)
         assert msg.member_type == UserType.CLIENT
-        
+
         # Check public key was recorded
         assert pds.server_public_key == server_info.public_key
 
@@ -275,20 +275,20 @@ class TestPeer:
     def test_verify_signature(self):
         response_address = ("some address", "some port")
         peer = BasePeerMock(response_address)
-        
+
         # Test correct
         obj = "some obj"
         signer = Signer()
         sig = signer.sign(obj)
         key = signer.get_transferable_public_key()
         assert peer.verify_signature(obj, sig, key)
-        
+
         # Test incorrect
         other_obj = "some other obj"
         assert peer.verify_signature(other_obj, sig, key) == False
-        
+
         other_sig = signer.sign(other_obj)
         assert peer.verify_signature(obj, other_sig, key) == False
-        
+
         other_key = Signer().get_transferable_public_key()
         assert peer.verify_signature(obj, sig, other_key) == False

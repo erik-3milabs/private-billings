@@ -66,7 +66,7 @@ class SharedMaskGenerator:
         self.convertor = convertor
         self.owned_seeds: dict[ClientID, SEED] = {}
         self.foreign_seeds: dict[ClientID, SEED] = {}
-       
+
     @property
     def is_stable(self) -> bool:
         """

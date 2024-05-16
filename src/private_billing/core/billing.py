@@ -59,11 +59,11 @@ class SharedBilling:
         """
         if not self.is_ready(cid):
             raise ValueError(f"cannot run billing for cycle {cid}")
-            
+
         # Gather data for the specified cycle
         cycle_data = self.client_data[cid]
         cyc = self.cycle_contexts[cid]
-        
+
         # Gather data for clients eligibile to participate in this billing cycle
         included_cycle_data = [cycle_data[c] for c in self.clients]
 
@@ -85,6 +85,7 @@ class SharedBilling:
         :returns: whether it is possible.
         """
         cycle_data = self.client_data.get(cid, {})
-        all_data_present = all(map(lambda c: c in cycle_data, self.clients)) and len(self.clients) > 0
+        at_least_one = len(self.clients) > 0
+        all_data_present = all(map(lambda c: c in cycle_data, self.clients))
         context_present = cid in self.cycle_contexts
-        return all_data_present and context_present
+        return at_least_one and all_data_present and context_present

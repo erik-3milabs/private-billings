@@ -29,8 +29,8 @@ class TestSharedBillingComputeBills:
         sb.record_data(hd)
 
         # Do not include client
-        # sb.include_client(hd.client) 
-        
+        # sb.include_client(hd.client)
+
         # Should not be ready to compute bill, since no data is available
         assert not sb.is_ready(hd.cycle_id)
 

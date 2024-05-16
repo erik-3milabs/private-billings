@@ -33,7 +33,7 @@ class HidingContext:
     @property
     def _secret_key(self):
         return self._key_pair.secretKey
-    
+
     @property
     def is_ready(self):
         """Whether this context is ready to hide/unhide data."""
@@ -142,7 +142,7 @@ class PublicHidingContext(HidingContext, Pickleable):
     @property
     def _secret_key(self):
         raise NotImplementedError("not implemented for public")
-    
+
     @property
     def is_ready(self):
         raise NotImplementedError("not implemented for public")

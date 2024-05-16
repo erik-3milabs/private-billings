@@ -58,7 +58,6 @@ class TestDataGetDeviations:
             utilization_promises=vector.new(cycle_length, 0.05),
             utilizations=vector.new(cycle_length, 0.01),
         )
-        print(d.consumption_deviations[0], d.supply_deviations[0], d.accepted_consumer_flags[0], d.accepted_producer_flags[0])
 
         assert d.individual_deviations == vector.new(cycle_length, 0.04)
 
@@ -79,7 +78,7 @@ class TestDataGetDeviations:
             client=0,
             cycle_id=0,
             utilization_promises=vector.new(cycle_length, 0),
-            utilizations=vector.new(cycle_length, 0.01)
+            utilizations=vector.new(cycle_length, 0.01),
         )
 
         # Deviations should be zero, because we did not promise to consume/produce
@@ -94,7 +93,7 @@ class TestDataGetDeviationFlags:
             client=0,
             cycle_id=0,
             utilization_promises=vector.new(cycle_length, 1),
-            utilizations=vector.new(cycle_length, 2)
+            utilizations=vector.new(cycle_length, 2),
         )
 
         assert d.positive_deviation_flags == vector.new(cycle_length, 1)
@@ -105,7 +104,7 @@ class TestDataGetDeviationFlags:
             client=0,
             cycle_id=0,
             utilization_promises=vector.new(cycle_length, 5),
-            utilizations=vector.new(cycle_length, 1)
+            utilizations=vector.new(cycle_length, 1),
         )
 
         assert d.positive_deviation_flags == vector.new(cycle_length, 0)
@@ -118,7 +117,7 @@ class TestDataGetDeviationFlags:
             client=0,
             cycle_id=0,
             utilization_promises=vector.new(cycle_length, 0),
-            utilizations=vector.new(cycle_length, 5)
+            utilizations=vector.new(cycle_length, 5),
         )
 
         assert d.positive_deviation_flags == vector.new(cycle_length, 0)
@@ -129,7 +128,7 @@ class TestDataGetDeviationFlags:
             client=0,
             cycle_id=0,
             utilization_promises=vector.new(cycle_length, -1),
-            utilizations=vector.new(cycle_length, -2)
+            utilizations=vector.new(cycle_length, -2),
         )
 
         assert d.positive_deviation_flags == vector.new(cycle_length, 1)
@@ -140,7 +139,7 @@ class TestDataGetDeviationFlags:
             client=0,
             cycle_id=0,
             utilization_promises=vector.new(cycle_length, -2),
-            utilizations=vector.new(cycle_length, -0.5)
+            utilizations=vector.new(cycle_length, -0.5),
         )
 
         assert d.positive_deviation_flags == vector.new(cycle_length, 0)
@@ -153,7 +152,7 @@ class TestDataGetDeviationFlags:
             client=0,
             cycle_id=0,
             utilization_promises=vector.new(cycle_length, 0),
-            utilizations=vector.new(cycle_length, -1)
+            utilizations=vector.new(cycle_length, -1),
         )
 
         assert d.positive_deviation_flags == vector.new(cycle_length, 0)
@@ -169,7 +168,7 @@ class TestDataHide:
             client=0,
             cycle_id=0,
             utilization_promises=vector.new(cycle_length, 0.05),
-            utilizations=vector.new(cycle_length, 0.10)
+            utilizations=vector.new(cycle_length, 0.10),
         )
 
         hd = d.hide(mhc)

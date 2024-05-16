@@ -13,7 +13,7 @@ class TestHiddenDataSerialization:
     def test_hidden_data_serialization(self):
         cyc_length = 1024
         hc = HidingContext(cyc_length, None)
-        
+
         hd = HiddenData(
             0,
             1,
@@ -38,17 +38,23 @@ class TestHiddenDataSerialization:
         assert hd1.cycle_id == hd.cycle_id
         assert are_equal_ciphertexts(hd1.consumptions, hd.consumptions, hc)
         assert are_equal_ciphertexts(hd1.supplies, hd.supplies, hc)
-        assert are_equal_ciphertexts(hd1.accepted_consumer_flags, hd.accepted_consumer_flags, hc)
-        assert are_equal_ciphertexts(hd1.accepted_producer_flags, hd.accepted_producer_flags, hc)
-        assert are_equal_ciphertexts(hd1.positive_deviation_flags, hd.positive_deviation_flags, hc)
+        assert are_equal_ciphertexts(
+            hd1.accepted_consumer_flags, hd.accepted_consumer_flags, hc
+        )
+        assert are_equal_ciphertexts(
+            hd1.accepted_producer_flags, hd.accepted_producer_flags, hc
+        )
+        assert are_equal_ciphertexts(
+            hd1.positive_deviation_flags, hd.positive_deviation_flags, hc
+        )
         assert hd1.masked_individual_deviations == hd.masked_individual_deviations
         assert hd1.masked_p2p_consumer_flags == hd.masked_p2p_consumer_flags
         assert hd1.masked_p2p_producer_flags == hd.masked_p2p_producer_flags
-        
+
         # Test if phcs are the same
         assert hd1.phc.cc == hd.phc.cc
         assert hd1.phc.cycle_length == hd.phc.cycle_length
-        
+
         # Test if public keys work the same
         phc: PublicHidingContext = hd1.phc
         pt = list(range(1024))

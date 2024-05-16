@@ -99,7 +99,7 @@ class MessageSender:
         buf = bytes()
         while count:
             newbuf = sock.recv(count)
-            if not newbuf: 
+            if not newbuf:
                 return None
             buf += newbuf
             count -= len(newbuf)
@@ -158,7 +158,10 @@ class MessageHandler(BaseRequestHandler, MessageSender):
             handler = self.handlers[msg.type]
             handler(msg, sender)
         except KeyError:
-            print(f"Recieved message of unknown type `{msg.type}`. Can only handle {self.handlers.keys()}.")
+            print(
+                f"Recieved message of unknown type `{msg.type}`."
+                f"Can only handle {self.handlers.keys()}."
+            )
 
     def reply(self, msg: Message) -> None:
         """Send reply."""
