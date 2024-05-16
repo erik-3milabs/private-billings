@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Any
 from openfhe import Ciphertext
 from .hiding import PublicHidingContext
 from .serialize import Pickleable
@@ -104,45 +103,25 @@ class HiddenData(Pickleable):
         base_bill = self.phc.scale(self.consumptions, cyc.trading_prices)
         base_reward = self.phc.scale(self.supplies, cyc.trading_prices)
 
-        # CASE: total deviation = 0
-        # consumer get their base_bill
-        # producer get their base_reward
-
-        # CASE: total deviation < 0
-        # L-> demand > supply
-        # L-> producers gets base_reward
-
-        # CASE: individual dev <= 0
-        # L> this consumer did not contribute to the over consumption
-        # L> consumer gets base_bill
-
-        # CASE: individual dev > 0
-        # consumer gets a billSupplement buy their portion of what was used too much against retail price.
+        # CASE: TD < 0, individual dev > 0
+        # consumer gets a supplement
+        # they buy their portion of what was used too much against retail price.
         # bill = (consumption + TD / nr_p2p_consumers) * tradingPrice - TD / nr_p2p_consumers * retailPrice
         #      = consumption * tradingPrice + TD / nr_p2p_consumers * (tradingPrice - retailPrice)
         #      = baseBill + TD / nr_p2p_consumers * (trading price - retail_price)
         # hence,
-        # supplement = TD / nr_p2p_consumers * (retail_price - trading price)
+        # supplement = TD / nr_p2p_consumers * (trading price - retail_price)
         bill_supplement = (
             (cyc.trading_prices - cyc.retail_prices)
             * scd.total_deviations
             / total_p2p_consumers
         )
         bill_supplement *= scd.negative_total_deviation_flags
-        bill_supplement_ct = self.phc.scale(
-            self.positive_deviation_flags, bill_supplement
-        )
+        bill_supplement_ct = self.phc.scale(self.positive_deviation_flags, bill_supplement)
 
-        # CASE: TD > 0
-        # demand < supply
-
-        # consumers <- baseBill
-
-        # CASE: indiv dev <= 0
-        # producers <- baseReward
-
-        # CASE: indiv dev > 0
-        # producers get a penalty they sell their portion of what was produced too much against feedin tarif
+        # CASE: TD > 0, individual dev > 0
+        # producers get a penalty
+        # they sell their portion of what was produced too much against feedin tarif
         # reward = (supply - TD / nr_p2p_producers) * tradingPrice + TD / nr_p2p_producers * feedInTarif
         #        = supply * tradingPrice + (TD / nr_p2p_producers * (feedInTarif - tradingPrice)
         #        = baseReward + (TD / nr_p2p_producers * (feedInTarif - tradingPrice)
@@ -156,9 +135,7 @@ class HiddenData(Pickleable):
             / total_p2p_producers
         )
         reward_penalty *= scd.positive_total_deviation_flags
-        reward_penalty_ct = self.phc.scale(
-            self.positive_deviation_flags, reward_penalty
-        )
+        reward_penalty_ct = self.phc.scale(self.positive_deviation_flags, reward_penalty)
 
         # Aggregating the P2P cases
         bill_p2p = base_bill + bill_supplement_ct
