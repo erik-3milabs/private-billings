@@ -64,20 +64,20 @@ class HidingContext:
         result.SetLength(self.cycle_length)  # unpack
         return vector(result.GetRealPackedValue())
 
-    def flip_bits(self, bits: Ciphertext) -> Ciphertext:
+    def invert_flags(self, flags: Ciphertext) -> Ciphertext:
         """
-        Flip encrypted bits
+        Invert encrypted flags (i.e. 0 to 1, 1 to 0)
 
-        :param bits: bits to flip
+        :param flags: flags to invert
         :return: flipped flags
         """
         ones = [1] * self.cycle_length
         ptxt_ones = self.cc.MakeCKKSPackedPlaintext(ones)  # pack
-        return self.cc.EvalSub(ptxt_ones, bits)
+        return self.cc.EvalSub(ptxt_ones, flags)
 
-    def mult_with_scalar(self, ctxt: Ciphertext, scalars: vector[float]) -> Ciphertext:
+    def scale(self, ctxt: Ciphertext, scalars: vector[float]) -> Ciphertext:
         """
-        Multiply ciphertext with plaintext scalars
+        Scale ciphertext with plaintext scalars
 
         :param ctxt: ciphertext
         :param scalars: plaintext scalar
@@ -87,7 +87,7 @@ class HidingContext:
         ptxt_msg = self.cc.MakeCKKSPackedPlaintext(scalars)  # pack
         return self.cc.EvalMult(ctxt, ptxt_msg)  # multiply
 
-    def multiply_ciphertexts(
+    def multiply(
         self, ctxt_1: Ciphertext, ctxt_2: Ciphertext
     ) -> Ciphertext:
         """Multiply ciphertexts"""

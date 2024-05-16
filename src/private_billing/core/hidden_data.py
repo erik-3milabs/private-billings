@@ -39,7 +39,12 @@ class HiddenData(Pickleable):
 
     def check_validity(self, cyc: CycleContext) -> bool:
         # Check all encrypted data is correct
-        # TODO
+        assert isinstance(self.consumptions, Ciphertext)
+        assert isinstance(self.supplies, Ciphertext)
+        assert isinstance(self.accepted_consumer_flags, Ciphertext)
+        assert isinstance(self.accepted_producer_flags, Ciphertext)
+        assert isinstance(self.positive_deviation_flags, Ciphertext)
+        assert isinstance(self.phc, PublicHidingContext)
 
         # Check all masked data is correct
         assert len(self.masked_individual_deviations) == cyc.cycle_length
@@ -84,24 +89,20 @@ class HiddenData(Pickleable):
         total_p2p_producers = max_vector(scd.total_p2p_producers, 1.0)
 
         # Create rejected a dual to the accepted mask
-        rejected_consumer_flags = self.phc.flip_bits(self.accepted_consumer_flags)
-        rejected_producer_flags = self.phc.flip_bits(self.accepted_producer_flags)
+        rejected_consumer_flags = self.phc.invert_flags(self.accepted_consumer_flags)
+        rejected_producer_flags = self.phc.invert_flags(self.accepted_producer_flags)
 
         # CASE: Client not accepted for P2P trading
         #  -> pay retail price for the consumption
         #  -> get feed-in tarif for the production
-        bill_no_p2p = self.phc.mult_with_scalar(self.consumptions, cyc.retail_prices)
-        bill_no_p2p = self.phc.multiply_ciphertexts(
-            bill_no_p2p, rejected_consumer_flags
-        )
-        reward_no_p2p = self.phc.mult_with_scalar(self.supplies, cyc.feed_in_tarifs)
-        reward_no_p2p = self.phc.multiply_ciphertexts(
-            reward_no_p2p, rejected_producer_flags
-        )
+        bill_no_p2p = self.phc.scale(self.consumptions, cyc.retail_prices)
+        bill_no_p2p = self.phc.multiply(bill_no_p2p, rejected_consumer_flags)
+        reward_no_p2p = self.phc.scale(self.supplies, cyc.feed_in_tarifs)
+        reward_no_p2p = self.phc.multiply(reward_no_p2p, rejected_producer_flags)
 
         # CASE: Client was accepted for P2P trading
-        base_bill = self.phc.mult_with_scalar(self.consumptions, cyc.trading_prices)
-        base_reward = self.phc.mult_with_scalar(self.supplies, cyc.trading_prices)
+        base_bill = self.phc.scale(self.consumptions, cyc.trading_prices)
+        base_reward = self.phc.scale(self.supplies, cyc.trading_prices)
 
         # CASE: total deviation = 0
         # consumer get their base_bill
@@ -117,21 +118,19 @@ class HiddenData(Pickleable):
 
         # CASE: individual dev > 0
         # consumer gets a billSupplement buy their portion of what was used too much against retail price.
-        # bill = (consumption - TD / nr_p2p_consumers) * tradingPrice + TD / nr_p2p_consumers * retailPrice
-        #      = consumption * tradingPrice + TD / nr_p2p_consumers * (retailPrice - tradingPrice)
-        #      = baseBill + TD / nr_p2p_consumers * (retail_price - trading price)
+        # bill = (consumption + TD / nr_p2p_consumers) * tradingPrice - TD / nr_p2p_consumers * retailPrice
+        #      = consumption * tradingPrice + TD / nr_p2p_consumers * (tradingPrice - retailPrice)
+        #      = baseBill + TD / nr_p2p_consumers * (trading price - retail_price)
         # hence,
         # supplement = TD / nr_p2p_consumers * (retail_price - trading price)
-
-        # some testing
         bill_supplement = (
-            (cyc.retail_prices - cyc.trading_prices) / total_p2p_consumers
-        ) * scd.total_deviations
-        bill_supplement_ct = self.phc.mult_with_scalar(
-            self.positive_deviation_flags, bill_supplement
+            (cyc.trading_prices - cyc.retail_prices)
+            * scd.total_deviations
+            / total_p2p_consumers
         )
-        bill_supplement_ct = self.phc.mult_with_scalar(
-            bill_supplement_ct, scd.negative_total_deviation_flags
+        bill_supplement *= scd.negative_total_deviation_flags
+        bill_supplement_ct = self.phc.scale(
+            self.positive_deviation_flags, bill_supplement
         )
 
         # CASE: TD > 0
@@ -152,23 +151,21 @@ class HiddenData(Pickleable):
         #
         # Note that the penalty is negative, since feedInTarif is assumed to be < tradingPrice
         reward_penalty = (
-            (cyc.feed_in_tarifs - cyc.trading_prices) / total_p2p_producers
-        ) * scd.total_deviations
-        reward_penalty_ct = self.phc.mult_with_scalar(
-            self.positive_deviation_flags, reward_penalty
+            (cyc.feed_in_tarifs - cyc.trading_prices)
+            * scd.total_deviations
+            / total_p2p_producers
         )
-        reward_penalty_ct = self.phc.mult_with_scalar(
-            reward_penalty_ct, scd.positive_total_deviation_flags
+        reward_penalty *= scd.positive_total_deviation_flags
+        reward_penalty_ct = self.phc.scale(
+            self.positive_deviation_flags, reward_penalty
         )
 
         # Aggregating the P2P cases
         bill_p2p = base_bill + bill_supplement_ct
-        bill_p2p = self.phc.multiply_ciphertexts(bill_p2p, self.accepted_consumer_flags)
+        bill_p2p = self.phc.multiply(bill_p2p, self.accepted_consumer_flags)
 
         reward_p2p = base_reward + reward_penalty_ct
-        reward_p2p = self.phc.multiply_ciphertexts(
-            reward_p2p, self.accepted_producer_flags
-        )
+        reward_p2p = self.phc.multiply(reward_p2p, self.accepted_producer_flags)
 
         # Aggregating P2P and no-P2P cases
         bill = bill_p2p + bill_no_p2p

@@ -98,7 +98,7 @@ class TestSharedBillingComputeBills:
 
         # Check bill is correct
         bill = bills[0]
-        assert bill.hidden_bill == hd.consumptions * cyc.trading_prices + (
+        assert bill.hidden_bill == hd.consumptions * cyc.trading_prices - (
             hd.masked_individual_deviations * (cyc.retail_prices - cyc.trading_prices)
         )
         # Note: not checking rewards, since this is a consumer (see consumer flags)

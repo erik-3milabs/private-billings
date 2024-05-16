@@ -74,16 +74,16 @@ def get_mock_hiding_context():
 
 class MockedPublicHidingContext(PublicHidingContext):
 
-    def flip_bits(self, vals):
+    def invert_flags(self, vals):
         return vector([1 - v for v in vals])
 
     def encrypt(self, scalars: list[float], pk):
         return vector(scalars)
 
-    def mult_with_scalar(self, ctxt, scalars: list[float]):
+    def scale(self, ctxt, scalars: list[float]):
         return vector([c * s for c, s in zip(ctxt, scalars)])
 
-    def multiply_ciphertexts(self, ctxt_1, ctxt_2):
+    def multiply(self, ctxt_1, ctxt_2):
         return vector([c1 * c2 for c1, c2 in zip(ctxt_1, ctxt_2)])
 
     def __eq__(self, o):
