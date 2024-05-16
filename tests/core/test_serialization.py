@@ -125,7 +125,7 @@ class TestCycleContextSerialization:
 
         # ... send over ...
 
-        cyc2: CycleContext = cyc.deserialize(serialization)
+        cyc2: CycleContext = CycleContext.deserialize(serialization)
 
         assert cyc.cycle_id == cyc2.cycle_id
         assert cyc.cycle_length == cyc2.cycle_length

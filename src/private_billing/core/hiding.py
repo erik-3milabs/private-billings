@@ -1,14 +1,7 @@
 from __future__ import annotations
-import pickle
-from typing import Any
-from .serialize import (
-    Serializible,
-    deserialize_cryptocontext,
-    deserialize_publickey,
-    serialize_fhe_obj,
-)
+
+from .serialize import Pickleable
 from .utils import vector
-from .cycle import CycleContext
 from .masking import SharedMaskGenerator
 from openfhe import (
     CCParamsCKKSRNS,
@@ -136,7 +129,7 @@ class HidingContext:
         return keys
 
 
-class PublicHidingContext(HidingContext, Serializible):
+class PublicHidingContext(HidingContext, Pickleable):
     def __init__(self, cycle_length: int, cc: CryptoContext, pk: PublicKey) -> None:
         self.cycle_length = cycle_length
         self.cc = cc
@@ -162,27 +155,3 @@ class PublicHidingContext(HidingContext, Serializible):
 
     def _generate_key_pair(self) -> KeyPair:
         raise NotImplementedError("not implemented for public")
-
-    def __getstate__(self) -> dict[str, Any]:
-        """Prepare object for pickling, i.e., serialization."""
-        # Prepare object for serialization
-        self.__cc_serialized = serialize_fhe_obj(self.cc)
-        self.__pk_serialized = serialize_fhe_obj(self._public_key)
-
-        # Disable unpickleable objects
-        attributes = self.__dict__.copy()
-        del attributes["cc"]
-        del attributes["_public_key"]
-        return attributes
-
-    def __setstate__(self, state):
-        """Rebuild object after unpickling, i.e., deserialization."""
-        self.__dict__ = state
-
-        # Rebuild objects
-        self.cc = deserialize_cryptocontext(self.__cc_serialized)
-        self._public_key = deserialize_publickey(self.__pk_serialized)
-        
-        # Remove placeholders
-        del self.__cc_serialized
-        del self.__pk_serialized

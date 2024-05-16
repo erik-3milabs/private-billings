@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from .serialize import Serializible
+from .serialize import Pickleable
 from .utils import vector, Flag
 
 CycleID = int
@@ -7,7 +7,7 @@ ClientID = int
 
 
 @dataclass
-class CycleContext(Serializible):
+class CycleContext(Pickleable):
     cycle_id: CycleID
     cycle_length: int
     retail_prices: vector[float]
