@@ -12,10 +12,10 @@ if __name__ == "__main__":
     type_ = sys.argv[1]
     match type_:
         case "bill":
-            launch_billing_server(mc)
+            launch_billing_server(mc, ip="0.0.0.0")
         case "peer":
-            launch_peer(mc)
+            launch_peer(mc, ip="0.0.0.0")
         case "market":
-            launch_market_operator(mc)
+            launch_market_operator(mc, ip="0.0.0.0")
         case _:
             raise ValueError(f"{type_} is invalid type")
