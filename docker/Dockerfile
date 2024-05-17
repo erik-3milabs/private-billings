@@ -51,8 +51,8 @@ COPY requirements.txt ./
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy in the source code
+COPY docker/launch.py launch.py
 COPY src ./src
-COPY launch.py launch.py
 
 # Setup an app user so the container doesn't run as the root user
 RUN useradd app

@@ -16,6 +16,6 @@ if __name__ == "__main__":
         case "peer":
             launch_peer(mc, ip="0.0.0.0")
         case "market":
-            launch_market_operator(mc, ip="0.0.0.0")
+            launch_market_operator(mc)
         case _:
             raise ValueError(f"{type_} is invalid type")
