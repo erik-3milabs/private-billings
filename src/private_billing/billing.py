@@ -1,8 +1,6 @@
 from threading import Thread
 from typing import Dict
 
-from private_billing.server.message_handler import MessageSender
-
 from .core import SharedBilling, ClientID, CycleID
 from .peer import Target
 from .messages import (
@@ -20,6 +18,7 @@ from .server import (
     IP,
     MarketConfig,
     MessageHandler,
+    MessageSender,
     Signer,
     no_response,
 )

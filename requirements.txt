@@ -2,3 +2,4 @@ numpy
 openfhe
 pybind11-global
 pytest
+cryptography

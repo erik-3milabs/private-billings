@@ -47,7 +47,7 @@ class TransferablePublicKey:
 
 class Signer:
 
-    def __init__(self, curve=ec.SECP256K1) -> None:
+    def __init__(self, curve=ec.SECP256K1()) -> None:
         self.private_key = ec.generate_private_key(curve)
 
     @property

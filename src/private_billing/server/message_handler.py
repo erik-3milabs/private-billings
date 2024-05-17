@@ -10,7 +10,7 @@ from uuid import UUID
 import logging
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename="application.log", level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 
 class MessageType(Enum):
