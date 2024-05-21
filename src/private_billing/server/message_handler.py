@@ -79,22 +79,26 @@ class MessageSender:
 
     @classmethod
     def _send(cls, sock: socket.socket, message: Message) -> None:
+        logger.debug(f"[{sock.getsockname()}] sending msg to {sock.getpeername()}")
+        
         # Encode message
         enc_msg = cls.encode(message)
 
         # Send header
         msg_len = len(enc_msg)
         msg_len_bytes = msg_len.to_bytes(8, "little")
-        logger.debug(f"sending header: {msg_len_bytes=}")
+        logger.debug(f"[{sock.getsockname()}] -> sending header: {msg_len=}")
         sock.send(msg_len_bytes)
 
         # Send content
         if msg_len > 0:
-            logger.debug(f"sending message")
+            logger.debug(f"[{sock.getsockname()}] -> sending content.")
             sock.sendall(enc_msg)
+            
+        logger.debug(f"[{sock.getsockname()}] -> message sent.")
 
     @classmethod
-    def recvall(cls, sock: socket.socket, count):
+    def _recvall(cls, sock: socket.socket, count):
         """Receive `count` bytes from `sock`."""
         buf = bytes()
         while count:
@@ -107,33 +111,33 @@ class MessageSender:
 
     @classmethod
     def _receive(cls, sock: socket.socket) -> Optional[Message]:
+        logger.debug(f"[{sock.getsockname()}] receiving msg from {sock.getpeername()}.")
         # Receive header
         header_bytes = sock.recv(8)
         resp_len = int.from_bytes(header_bytes, "little")
-        logger.debug(f"received header: {resp_len}")
+        logger.debug(f"[{sock.getsockname()}] -> received header: {resp_len=}")
 
         # Return if no response
         if resp_len == 0:
             return None
 
         # Receive message
-        resp_bytes = cls.recvall(sock, resp_len)
-        logger.debug("received message")
+        resp_bytes = cls._recvall(sock, resp_len)
 
         # Decode
         msg = cls.decode(resp_bytes)
+        logger.debug(f"[{sock.getsockname()}] -> received message: {msg=}")
         return msg
 
     @classmethod
     def send(cls, message: Message, target: Target) -> Optional[Message]:
-        logger.debug(f"sending: {message} to {target}")
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            logger.debug(f"[{sock.getsockname()}] connecting to {target.address}...")
             sock.connect(target.address)
-            logger.debug(f"connected to {target.address}.")
+            logger.debug(f"[{sock.getsockname()}] connected to {target.address}.")
 
             # Send message
             cls._send(sock, message)
-            logger.debug(f"message sent.")
 
             # Receive response
             response = cls._receive(sock)
@@ -154,9 +158,8 @@ class MessageHandler(BaseRequestHandler, MessageSender):
 
     def handle(self) -> None:
         # Receive message
+        sender = Target(None, self.client_address[1])
         msg = self._receive(self.request)
-        sender = Target(None, self.client_address)
-        logger.debug(f"received: {msg} from {sender}")
 
         # handle message
         try:
@@ -167,6 +170,8 @@ class MessageHandler(BaseRequestHandler, MessageSender):
                 f"Recieved message of unknown type `{msg.type}`."
                 f"Can only handle {self.handlers.keys()}."
             )
+        
+        logger.debug(f"[{self.request.getsockname()}] -> done handling")
 
     def reply(self, msg: Message) -> None:
         """Send reply."""
