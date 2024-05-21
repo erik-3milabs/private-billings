@@ -4,7 +4,7 @@ from enum import Enum
 from typing import List, Optional
 
 from .core import ClientID, HiddenBill, HiddenData, SEED, CycleContext, CycleID, Data
-from .server import Message, MessageType, Target, MarketConfig, ADDRESS
+from .server import Message, MessageType, Target, ADDRESS
 
 
 class ValidationException(Exception):
@@ -196,7 +196,7 @@ class BillMessage(Message):
 
 @dataclass
 class BootMessage(Message):
-    market_config: MarketConfig
+    market_address: ADDRESS
 
     @property
     def type(self) -> BillingMessageType:
@@ -204,6 +204,6 @@ class BootMessage(Message):
 
     def check_validity(self) -> None:
         try:
-            assert isinstance(self.market_config, MarketConfig)
+            assert isinstance(self.market_address, ADDRESS)
         except AssertionError:
-            raise ValidationException("Invalid bill message")
+            raise ValidationException("Invalid boot message")

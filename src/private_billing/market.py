@@ -13,11 +13,7 @@ from .messages import (
     WelcomeMessage,
     BillingMessageType,
 )
-from .server import (
-    MarketConfig,
-    MessageHandler,
-    ADDRESS,
-)
+from .server import MessageHandler, ADDRESS
 
 
 class MarketOperatorDataStore:
@@ -27,7 +23,6 @@ class MarketOperatorDataStore:
         self.cycle_contexts: Dict[CycleID, CycleContext] = {}
         self.participants: Dict[ADDRESS, Target] = {}
         self.billing_server: Target = None
-        self.market_config: MarketConfig = None
 
     def get_peers(self, client: Target) -> List[Target]:
         """Get all peers for a given participant."""
@@ -99,7 +94,6 @@ class MarketOperator(MessageHandler):
 
         # Update participants of new server
         for peer in self.data.participants.values():
-            # peer.address = peer.address[0], self.data.market_config.peer_port
             new_server_msg = NewMemberMessage(server, UserType.SERVER)
             self.send(new_server_msg, peer)
 
@@ -123,7 +117,9 @@ if __name__ == "__main__":
 
 
 def launch_market_operator(
-    market_config: MarketConfig, logging_level=logging.DEBUG
+    cycle_length: int = 1024,
+    logging_level=logging.DEBUG,
+    server_address: ADDRESS = ("localhost", 5555),
 ) -> None:
     # Specify logging setup
     logging.basicConfig()
@@ -131,14 +127,12 @@ def launch_market_operator(
     logger.setLevel(logging_level)
 
     # Setup server
-    address = (market_config.market_host, market_config.market_port)
-    with socketserver.TCPServer(address, MarketOperator) as server:
+    logger.info(f"Going live on {server_address=}")
+    with socketserver.TCPServer(server_address, MarketOperator) as server:
         # Configure server
         mods = MarketOperatorDataStore()
-        mods.market_config = market_config
-        mods.cycle_length = 1024
+        mods.cycle_length = cycle_length
         server.data = mods
 
         # Launch
-        logger.info(f"Going live on {address=}")
         server.serve_forever()

@@ -1,4 +1,3 @@
-from .market_config import MarketConfig
 from .message_handler import (
     Message,
     MessageHandler,

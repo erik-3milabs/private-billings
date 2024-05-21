@@ -21,7 +21,7 @@ from src.private_billing.messages import (
     GetBillMessage,
     GetContextMessage,
 )
-from src.private_billing.server import MessageSender, Target, MarketConfig
+from src.private_billing.server import MessageSender, Target
 
 
 class TestIntegration:
@@ -33,13 +33,11 @@ class TestIntegration:
             sock.connect(address)
             MessageSender._send(sock, boot)
 
-    def launch_market_operator(self, mc: MarketConfig) -> Tuple[TCPServer, Thread]:
-        address = mc.market_host, mc.market_port
+    def launch_market_operator(self, address) -> Tuple[TCPServer, Thread]:
         operator = TCPServer(address, MarketOperator)
 
         # Configure server
         mods = MarketOperatorDataStore()
-        mods.market_config = mc
         mods.cycle_length = 1024
         operator.data = mods
 
@@ -48,14 +46,8 @@ class TestIntegration:
         thread.start()
         return operator, thread
 
-    def launch_billing_server(self, mc: MarketConfig) -> Tuple[TCPServer, Thread]:
-        address = "localhost", mc.billing_port
+    def launch_billing_server(self, address) -> Tuple[TCPServer, Thread]:
         server = TCPServer(address, BillingServer)
-
-        # Configure server
-        bsds = BillingServerDataStore()
-        bsds.market_config = mc
-        server.data = bsds
 
         # Launch
         print(f"Running server on {server.server_address}.")
@@ -63,14 +55,8 @@ class TestIntegration:
         thread.start()
         return server, thread
 
-    def launch_peer(self, mc: MarketConfig, port) -> Tuple[TCPServer, Thread]:
-        address = "localhost", port
+    def launch_peer(self, address) -> Tuple[TCPServer, Thread]:
         peer = TCPServer(address, Peer)
-
-        # Configure server
-        pds = PeerDataStore()
-        pds.market_config = mc
-        peer.data = pds
 
         # Launch peer
         print(f"Launching peer on {peer.server_address}.")
@@ -82,17 +68,17 @@ class TestIntegration:
         nr_peers = 10
         port_range = list(range(5000, 6000))
         ports = random.choices(port_range, k=nr_peers + 2)
-        mc = MarketConfig("localhost", ports[0], ports[1], None)
 
         # Parties
-        market_operator = self.launch_market_operator(mc)
-        billing_server = self.launch_billing_server(mc)
+        market_address = "localhost", ports[0]
+        market_operator = self.launch_market_operator(market_address)
+        billing_server = self.launch_billing_server(("localhost", ports[1]))
         peer_ports = ports[2:]
-        peers = [self.launch_peer(mc, port) for port in peer_ports]
+        peers = [self.launch_peer(("localhost", port)) for port in peer_ports]
 
         # Send boot messages
         print("giving boot signals")
-        boot = BootMessage(mc)
+        boot = BootMessage(market_address)
         for port in ports[1:]:
             target = Target(None, ("localhost", port))
             resp = MessageSender.send(boot, target)
@@ -108,7 +94,7 @@ class TestIntegration:
             vector.new(cycle_len, 0.11),
         )
         cyc_msg = ContextMessage(cyc)
-        target = Target(None, (mc.market_host, mc.market_port))
+        target = Target(None, market_address)
         MessageSender.send(cyc_msg, target)
 
         # Have peers send data to billing server

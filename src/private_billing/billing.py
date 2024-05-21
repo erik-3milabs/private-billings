@@ -15,8 +15,7 @@ from .messages import (
     WelcomeMessage,
 )
 from .server import (
-    IP,
-    MarketConfig,
+    ADDRESS,
     MessageHandler,
     MessageSender,
     Signer,
@@ -31,14 +30,13 @@ class BillingServerDataStore:
     def __init__(self) -> None:
         self.shared_biller = SharedBilling()
         self.id: ClientID = None
-        self.market_config: MarketConfig = None
+        self.market_address: ADDRESS = None
         self.participants: Dict[ClientID, Target] = {}
         self.signer = Signer()
 
     @property
     def market_operator(self):
-        address = (self.market_config.market_host, self.market_config.market_port)
-        return Target(None, address)
+        return Target(None, self.market_address)
 
 
 class BillingServer(MessageHandler):
@@ -65,10 +63,9 @@ class BillingServer(MessageHandler):
         """
 
         # Register with the market_operator
-        mc = msg.market_config
-        market_operator = Target(None, (mc.market_host, mc.market_port))
+        self.data.market_address = msg.market_address
         hello_msg = HelloMessage(UserType.SERVER, self.contact_address)
-        resp: WelcomeMessage = self.send(hello_msg, market_operator)
+        resp: WelcomeMessage = self.send(hello_msg, self.data.market_operator)
 
         # Store id
         self.data.id = resp.id
@@ -137,27 +134,31 @@ class BillingServer(MessageHandler):
 
 
 def launch_billing_server(
-    market_config: MarketConfig, logging_level=logging.DEBUG, ip: IP = "localhost"
+    logging_level=logging.DEBUG,
+    server_address: ADDRESS = ("localhost", 0),
+    market_address: ADDRESS = ("localhost", 5555),
 ) -> None:
+    """
+    Launch billing server
+
+    :param logging_level: log level, defaults to logging.DEBUG
+    :param server_address: address to host this server, defaults to ("localhost", 0)
+    :param market_address: market operator address, defaults to ("localhost", 5555)
+    """
     # Specify logging setup
     logging.basicConfig()
     logger = logging.getLogger(__name__)
     logger.setLevel(logging_level)
 
     # Launch server
-    address = (ip, market_config.billing_port)
-    logger.info(f"Going live on {address=}")
-    with TCPServer(address, BillingServer) as server:
-        # Configure server
-        bsds = BillingServerDataStore()
-        bsds.market_config = market_config
-        server.data = bsds
+    logger.info(f"Going live on {server_address=}")
+    with TCPServer(server_address, BillingServer) as server:
 
         # Start serving
         thread = Thread(target=server.serve_forever)
         thread.start()
 
         # Send boot message to server
-        msg = BootMessage(market_config)
-        target = Target(None, address)
+        msg = BootMessage(market_address)
+        target = Target(None, server_address)
         MessageSender.send(msg, target)

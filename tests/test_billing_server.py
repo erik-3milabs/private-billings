@@ -17,7 +17,7 @@ from src.private_billing.messages import (
     UserType,
     WelcomeMessage,
 )
-from src.private_billing.server import Target, MarketConfig, ADDRESS
+from src.private_billing.server import Target, ADDRESS
 
 
 class BaseBillingServerMock(BillingServer):
@@ -59,13 +59,13 @@ class TestBilling:
     def test_registration(self):
         # Test settings
         sender = Target(0, ("Sender address", 1000))
-        mc = MarketConfig("localhost", 5555, 5554, 5553)
+        market_address = "localhost", 5555
         welcome = WelcomeMessage(
             6,
             Target(6, sender.address),
             [
-                Target(1, ("localhost", mc.peer_port)),
-                Target(2, ("localhost", mc.peer_port)),
+                Target(1, ("localhost", 5432)),
+                Target(2, ("localhost", 6543)),
             ],
             1024,
         )
@@ -80,7 +80,7 @@ class TestBilling:
                     return ""
 
         # Test input
-        boot = BootMessage(mc)
+        boot = BootMessage(market_address)
 
         # Execute test
         response_address = ("some_address", "some_port")
@@ -103,7 +103,7 @@ class TestBilling:
 
         msg, target = server._sent[0]
         assert isinstance(msg, HelloMessage)
-        assert target == Target(None, (mc.market_host, mc.market_port))
+        assert target == Target(None, market_address)
 
         msg, target = server._sent[1]
         assert isinstance(msg, NewMemberMessage)

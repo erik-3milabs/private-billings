@@ -19,7 +19,7 @@ from src.private_billing.messages import (
     UserType,
     WelcomeMessage,
 )
-from src.private_billing.server import Target, MarketConfig, Signer
+from src.private_billing.server import Target, Signer
 
 
 class BasePeerMock(Peer):
@@ -61,14 +61,14 @@ class TestPeer:
     def test_handle_registration(self):
         # Test settings
         sender = Target(0, ("Sender address", 1000))
-        mc = MarketConfig("localhost", 5555, 5554, 5553)
+        market_address = ("localhost", 5555)
         billing_server = Target(77, sender.address)
         welcome = WelcomeMessage(
             6,
             billing_server,
             [
-                Target(1, ("localhost", mc.peer_port)),
-                Target(2, ("localhost", mc.peer_port)),
+                Target(1, ("localhost", 5432)),
+                Target(2, ("localhost", 6543)),
             ],
             1024,
         )
@@ -91,7 +91,7 @@ class TestPeer:
                     return server_info
 
         # Test input
-        boot = BootMessage(mc)
+        boot = BootMessage(market_address)
 
         # Execute test
         response_address = ("some_address", "some_port")
@@ -117,9 +117,8 @@ class TestPeer:
 
         # first message should have been sent to the market operator
         msg, target = first
-        assert msg == HelloMessage(UserType.CLIENT, response_address=response_address)
-        market_operator = Target(None, (mc.market_host, mc.market_port))
-        assert target == market_operator
+        assert msg == HelloMessage(UserType.CLIENT, response_address)
+        assert target == Target(None, market_address)
 
         # second and third messages are seed messages
         msg, target = second
