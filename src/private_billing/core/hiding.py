@@ -89,9 +89,7 @@ class HidingContext:
         ptxt_msg = self.cc.MakeCKKSPackedPlaintext(scalars)  # pack
         return self.cc.EvalMult(ctxt, ptxt_msg)  # multiply
 
-    def multiply(
-        self, ctxt_1: Ciphertext, ctxt_2: Ciphertext
-    ) -> Ciphertext:
+    def multiply(self, ctxt_1: Ciphertext, ctxt_2: Ciphertext) -> Ciphertext:
         """Multiply ciphertexts"""
         return self.cc.EvalMult(ctxt_1, ctxt_2)
 
