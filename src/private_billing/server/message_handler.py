@@ -154,7 +154,7 @@ class MessageHandler(BaseRequestHandler, MessageSender):
     @property
     def contact_address(self) -> ADDRESS:
         """Address at which this this handler is contacted."""
-        return self.server.server_address
+        return self.request.getsockname()
 
     def handle(self) -> None:
         # Receive message

@@ -25,8 +25,11 @@ class BaseBillingServerMock(BillingServer):
         self, response_address: ADDRESS, data_store: BillingServerDataStore = None
     ) -> None:
         """Cutting away communication components."""
+        class MockRequest:
+            def getsockname(self):
+                return response_address
         server_mock = Namespace(server_address=response_address)
-        super().__init__(None, None, server_mock)
+        super().__init__(MockRequest(), None, server_mock)
 
         # Store responses and sent messages
         if not data_store:

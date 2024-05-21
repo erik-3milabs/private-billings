@@ -7,21 +7,28 @@ from src.private_billing import (
 
 if __name__ == "__main__":
     type_ = sys.argv[1]
+    
+    # market address
+    market_host = sys.argv[2]
+    market_port = int(sys.argv[3])
+    market_address = market_host, market_port
+    
+    # server host
+    host = sys.argv[4]
 
     # Settings
-    host = "0.0.0.0"
-    market_address = host, 5555
-    billing_address = host, 5554
     cyc_len = 672  # nr of 15m slots in a week.
     
     match type_:
         case "bill":
-            launch_billing_server(billing_address, market_address)
+            server_address = host, 5554
+            launch_billing_server(server_address, market_address)
         case "peer":
-            port = sys.argv[2]
+            port = sys.argv[5]
             server_address = host, int(port)
             launch_peer(server_address, market_address)
         case "market":
-            launch_market_operator(market_address, cyc_len)
+            server_address = host, 5555
+            launch_market_operator(server_address, cyc_len)
         case _:
             raise ValueError(f"{type_} is invalid type")

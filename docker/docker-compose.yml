@@ -1,0 +1,74 @@
+services:
+
+  market:
+    image: private-billing:0.0.1
+    ports:
+      - 5555:5555
+    command: python3 launch.py market market 5555 market
+    networks:
+      - billing
+
+  billing:
+    image: private-billing:0.0.1
+    ports:
+      - 5554:5554
+    command: python3 launch.py bill market 5555 billing
+    networks:
+      - billing
+    depends_on:
+      - "market"
+
+  peer0:
+    image: private-billing:0.0.1
+    ports:
+      - 5560:5560
+    command: python3 launch.py peer market 5555 peer0 5560
+    networks:
+      - billing
+    depends_on:
+      - "market"
+
+  peer1:
+    image: private-billing:0.0.1
+    ports:
+      - 5561:5561
+    command: python3 launch.py peer market 5555 peer1 5561
+    networks:
+      - billing
+    depends_on:
+      - "market"
+
+  peer2:
+    image: private-billing:0.0.1
+    ports:
+      - 5562:5562
+    command: python3 launch.py peer market 5555 peer2 5562
+    networks:
+      - billing
+    depends_on:
+      - "market"
+
+  peer3:
+    image: private-billing:0.0.1
+    ports:
+      - 5563:5563
+    command: python3 launch.py peer market 5555 peer3 5563
+    networks:
+      - billing
+    depends_on:
+      - "market"
+
+  peer4:
+    image: private-billing:0.0.1
+    ports:
+      - 5564:5564
+    command: python3 launch.py peer market 5555 peer4 5564
+    networks:
+      - billing
+    depends_on:
+      - "market"
+
+networks:
+  billing:
+    name: "billing"
+    driver: bridge

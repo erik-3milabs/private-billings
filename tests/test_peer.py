@@ -28,7 +28,10 @@ class BasePeerMock(Peer):
     ) -> None:
         """Cutting away communication components."""
         server_mock = Namespace(server_address=response_address)
-        super().__init__(None, None, server_mock)
+        class MockRequest:
+            def getsockname(self):
+                return response_address
+        super().__init__(MockRequest(), None, server_mock)
 
         # Store responses and sent messages
         if not data_store:
