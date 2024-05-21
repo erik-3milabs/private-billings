@@ -1,5 +1,4 @@
 import sys
-from src.private_billing.server.market_config import MarketConfig
 from src.private_billing import (
     launch_market_operator,
     launch_peer,
@@ -7,15 +6,22 @@ from src.private_billing import (
 )
 
 if __name__ == "__main__":
-    mc = MarketConfig("0.0.0.0", 5555, 5554, 5553)
-
     type_ = sys.argv[1]
+
+    # Settings
+    host = "0.0.0.0"
+    market_address = host, 5555
+    billing_address = host, 5554
+    cyc_len = 672  # nr of 15m slots in a week.
+    
     match type_:
         case "bill":
-            launch_billing_server(mc, ip="0.0.0.0")
+            launch_billing_server(billing_address, market_address)
         case "peer":
-            launch_peer(mc, ip="0.0.0.0")
+            port = sys.argv[2]
+            server_address = host, int(port)
+            launch_peer(server_address, market_address)
         case "market":
-            launch_market_operator(mc)
+            launch_market_operator(market_address, cyc_len)
         case _:
             raise ValueError(f"{type_} is invalid type")

@@ -1,6 +1,7 @@
 import logging
 from socketserver import TCPServer
 from threading import Thread
+from time import sleep
 from typing import Any, Dict
 from .core import (
     Bill,
@@ -186,6 +187,8 @@ class Peer(MessageHandler):
     def register_with_server(self, server: Target) -> None:
         self_ = Target(self.data.id, self.server.server_address)
         msg = NewMemberMessage(self_, UserType.CLIENT)
+        import logging
+        logging.debug(server)
         resp: NewMemberMessage = self.send(msg, server)
         self.data.server_public_key = resp.public_key
 
@@ -214,9 +217,9 @@ class Peer(MessageHandler):
 
 
 def launch_peer(
-    logging_level=logging.DEBUG, 
-    server_address: ADDRESS = ("localhost", 0),
-    market_address: ADDRESS = ("localhost", 5555)
+    server_address: ADDRESS,
+    market_address: ADDRESS,
+    logging_level=logging.DEBUG
 ) -> None:
     """
     Launch peer server
@@ -232,11 +235,18 @@ def launch_peer(
 
     # Launch server
     logger.info(f"Going live on {server_address=}")
-    with TCPServer(server_address, Peer) as server:
-        thread = Thread(target=server.serve_forever)
-        thread.start()
+    def serve():
+        with TCPServer(server_address, Peer) as server:
+            server.serve_forever()
 
-        # Send boot message to server
-        msg = BootMessage(market_address)
-        target = Target(None, server_address)
-        MessageSender.send(msg, target)
+    thread = Thread(target=serve)
+    thread.start()
+    
+    # Allow server to boot up
+    sleep(0.5)
+
+    # Send boot message to server
+    msg = BootMessage(market_address)
+    target = Target(None, server_address)
+    resp = MessageSender.send(msg, target)
+    logger.debug(f"booted server: {resp}")

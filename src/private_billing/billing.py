@@ -1,4 +1,5 @@
 from threading import Thread
+from time import sleep
 from typing import Dict
 
 from .core import SharedBilling, ClientID, CycleID
@@ -134,9 +135,9 @@ class BillingServer(MessageHandler):
 
 
 def launch_billing_server(
-    logging_level=logging.DEBUG,
-    server_address: ADDRESS = ("localhost", 0),
-    market_address: ADDRESS = ("localhost", 5555),
+    server_address: ADDRESS,
+    market_address: ADDRESS,
+    logging_level=logging.DEBUG
 ) -> None:
     """
     Launch billing server
@@ -152,13 +153,20 @@ def launch_billing_server(
 
     # Launch server
     logger.info(f"Going live on {server_address=}")
-    with TCPServer(server_address, BillingServer) as server:
+    
+    def serve():
+        with TCPServer(server_address, BillingServer) as server:
+            # Start serving
+            server.serve_forever()
+            
+    thread = Thread(target=serve)
+    thread.start()
+    
+    # Allow server to boot up
+    sleep(0.5)
 
-        # Start serving
-        thread = Thread(target=server.serve_forever)
-        thread.start()
-
-        # Send boot message to server
-        msg = BootMessage(market_address)
-        target = Target(None, server_address)
-        MessageSender.send(msg, target)
+    # Send boot message to server
+    msg = BootMessage(market_address)
+    target = Target(None, server_address)
+    resp = MessageSender.send(msg, target)
+    logger.debug(f"booted server: {resp}")

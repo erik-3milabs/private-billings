@@ -117,9 +117,9 @@ if __name__ == "__main__":
 
 
 def launch_market_operator(
+    server_address: ADDRESS,
     cycle_length: int = 1024,
-    logging_level=logging.DEBUG,
-    server_address: ADDRESS = ("localhost", 5555),
+    logging_level = logging.DEBUG,
 ) -> None:
     # Specify logging setup
     logging.basicConfig()
