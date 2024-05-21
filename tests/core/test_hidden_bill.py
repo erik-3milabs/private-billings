@@ -21,3 +21,14 @@ class TestHiddenBill:
 
         for v in bill.reward:
             assert abs(v - 55) < pow(10, -6)
+
+    def test_reveal_proper_length(self):
+        cyc_len = 555
+        hc = HidingContext(cyc_len, None)
+        enc_bill = hc.encrypt(vector.new(1024, 5))
+        enc_reward = hc.encrypt(vector.new(1024, 55))
+        hb = HiddenBill(5, enc_bill, enc_reward)
+
+        bill = hb.reveal(hc)
+        assert len(bill.bill) == cyc_len
+        assert len(bill.reward) == cyc_len

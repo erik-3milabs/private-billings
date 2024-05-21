@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 
 from .serialize import Pickleable
 from .utils import vector
@@ -22,7 +23,7 @@ class HidingContext:
 
     def __init__(self, cycle_length: int, mask_generator: SharedMaskGenerator) -> None:
         self.cycle_length = cycle_length
-        self.cc = self._generate_crypto_context(cycle_length)
+        self.cc = self._generate_crypto_context()
         self._key_pair = self._generate_key_pair()
         self.mask_generator = mask_generator
 
@@ -55,6 +56,7 @@ class HidingContext:
 
     def encrypt(self, values: vector[float]) -> Ciphertext:
         """Encrypt a list of values"""
+        values.pad_to(self.cycle_length)  # pad to proper length
         ptxt = self.cc.MakeCKKSPackedPlaintext(values)  # pack
         return self.cc.Encrypt(self.public_key, ptxt)  # encrypt
 
@@ -93,8 +95,9 @@ class HidingContext:
         """Multiply ciphertexts"""
         return self.cc.EvalMult(ctxt_1, ctxt_2)
 
-    def _generate_crypto_context(self, cycle_length: int) -> CryptoContext:
+    def _generate_crypto_context(self) -> CryptoContext:
         """Generate the cryptographic context used in this context."""
+        ciphertext_len = int(math.pow(2, math.ceil(math.log2(self.cycle_length))))
         dcrtBits = 55
         firstMod = 59
 
@@ -105,7 +108,7 @@ class HidingContext:
         parameters.SetSecretKeyDist(SecretKeyDist.UNIFORM_TERNARY)
 
         parameters.SetRingDim(1 << 14)
-        parameters.SetBatchSize(cycle_length)
+        parameters.SetBatchSize(ciphertext_len)
 
         parameters.SetNumLargeDigits(4)
         parameters.SetKeySwitchTechnique(KeySwitchTechnique.HYBRID)

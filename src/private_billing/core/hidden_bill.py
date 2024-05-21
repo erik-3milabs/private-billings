@@ -23,5 +23,9 @@ class HiddenBill(Pickleable):
         # remove noise
         bill = vector([round(b, 5) for b in bill])
         reward = vector([round(r, 5) for r in reward])
+        
+        # truncate to proper length
+        bill.truncate(hc.cycle_length)
+        reward.truncate(hc.cycle_length)
 
         return Bill(self.cycle_id, bill, reward)

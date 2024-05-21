@@ -14,8 +14,8 @@ class HidingContextMock(HidingContext):
     Mock for Hiding Context
     """
 
-    def __init__(self) -> None:
-        super().__init__(0, None)
+    def __init__(self, cycle_len) -> None:
+        super().__init__(cycle_len, None)
 
     def mask(self, values: list[float], iv: int) -> list[float]:
         return values
@@ -36,7 +36,7 @@ class HidingContextMock(HidingContext):
         return vector([1 - v for v in flags])
 
     def get_public_hiding_context(self) -> PublicHidingContext:
-        return PublicHidingContextMock()
+        return PublicHidingContextMock(self.cycle_length)
 
 
 class PublicHidingContextMock(HidingContextMock):
@@ -109,7 +109,7 @@ class TestHiddenBill:
 
         # Create data
         data = self.create_data(promise, utilization)
-        hc = HidingContextMock()
+        hc = HidingContextMock(cyc.cycle_length)
         hd = data.hide(hc)
 
         # Compute bill

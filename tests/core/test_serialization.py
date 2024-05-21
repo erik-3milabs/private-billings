@@ -57,7 +57,7 @@ class TestHiddenDataSerialization:
 
         # Test if public keys work the same
         phc: PublicHidingContext = hd1.phc
-        pt = list(range(1024))
+        pt = vector(range(1024))
         enc = phc.encrypt(pt)
         dec = hc.decrypt(enc)
         dec = [round(x) for x in dec]

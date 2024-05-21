@@ -103,6 +103,19 @@ class vector(list):
     def __ior__(self, o) -> vector:
         return self | o
 
+    def pad_to(self, new_len: int, padding_val = 0) -> None:
+        """
+        Pad vector
+
+        :param new_len: new length to pad to
+        :param padding_val: value to pad with, defaults to 0
+        """
+        extension = [padding_val] * (new_len - len(self))
+        self.extend(extension)
+        
+    def truncate(self, new_len: int) -> None:
+        """Truncate self to new length."""
+        self = vector(self[:new_len])
 
 T = TypeVar("T")
 
