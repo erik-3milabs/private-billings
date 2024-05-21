@@ -67,7 +67,7 @@ class BillingServer(MessageHandler):
         # Register with the market_operator
         mc = msg.market_config
         market_operator = Target(None, (mc.market_host, mc.market_port))
-        hello_msg = HelloMessage(UserType.SERVER, self.server.server_address)
+        hello_msg = HelloMessage(UserType.SERVER, self.contact_address)
         resp: WelcomeMessage = self.send(hello_msg, market_operator)
 
         # Store id
@@ -89,7 +89,7 @@ class BillingServer(MessageHandler):
         # Record client information
         self.record_client(msg.new_member)
         public_key = self.data.signer.get_transferable_public_key()
-        self_ = Target(self.data.id, self.server.server_address)
+        self_ = Target(self.data.id, self.contact_address)
         self.reply(NewMemberMessage(self_, UserType.SERVER, public_key))
 
     @no_response
@@ -130,7 +130,7 @@ class BillingServer(MessageHandler):
 
     def register_with_client(self, client: Target) -> None:
         # Register with the peer
-        self_ = Target(self.data.id, self.server.server_address)
+        self_ = Target(self.data.id, self.contact_address)
         public_key = self.data.signer.get_transferable_public_key()
         new_server = NewMemberMessage(self_, UserType.SERVER, public_key)
         self.send(new_server, client)

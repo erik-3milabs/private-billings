@@ -89,7 +89,7 @@ class Peer(MessageHandler):
         # Register with the market_operator
         mc = msg.market_config
         market_operator = Target(None, (mc.market_host, mc.market_port))
-        hello_msg = HelloMessage(UserType.CLIENT, self.server.server_address)
+        hello_msg = HelloMessage(UserType.CLIENT, self.contact_address)
         resp: WelcomeMessage = self.send(hello_msg, market_operator)
 
         # Store id

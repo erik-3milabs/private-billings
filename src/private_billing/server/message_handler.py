@@ -146,6 +146,11 @@ class MessageHandler(BaseRequestHandler, MessageSender):
     @property
     def handlers(self) -> Dict[MessageType, Callable[[Message, Target], None]]:
         return {}
+    
+    @property
+    def contact_address(self) -> ADDRESS:
+        """Address at which this this handler is contacted."""
+        return self.server.server_address
 
     def handle(self) -> None:
         # Receive message
