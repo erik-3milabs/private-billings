@@ -21,6 +21,7 @@ dependencies = [
     "openfhe",
     "pybind11",
     "pytest",
+    "cryptography",
 ]
 
 [project.urls]
