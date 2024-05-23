@@ -46,7 +46,6 @@ class PeerDataStore:
         self.mg = SharedMaskGenerator(Int64ToFloatConvertor(6, 4))
         self.hc: HidingContext = None
         self.context: Dict[CycleID, CycleContext] = {}
-        self.peers: Dict[ClientID, Target] = {}
         self.billing_server: Target = None
         self.server_public_key: TransferablePublicKey = None
         self.bills: Dict[CycleID, Bill] = {}
@@ -99,7 +98,6 @@ class Peer(MessageHandler):
 
         # Exchange seeds with registered peers
         for peer in resp.peers:
-            self.data.peers[peer.id] = peer
             self.register_with_peer(peer)
 
         # Register with billing server
@@ -126,9 +124,6 @@ class Peer(MessageHandler):
 
         # Consume sent seed
         self.data.mg.consume_foreign_seed(msg.seed, sender.id)
-
-        # Register peer
-        self.data.peers[sender.id] = sender
 
         # Return seed
         seed = self.data.mg.get_seed_for_peer(sender.id)
