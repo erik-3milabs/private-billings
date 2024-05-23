@@ -78,7 +78,7 @@ class MessageSender:
 
     @classmethod
     def _send(cls, sock: socket.socket, message: Message) -> None:
-        logger.info(f"[{sock.getsockname()}] sending {msg=} to {sock.getpeername()}")
+        logger.info(f"[{sock.getsockname()}] sending {message=} to {sock.getpeername()}")
         
         # Encode message
         enc_msg = cls.encode(message)

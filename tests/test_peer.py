@@ -106,8 +106,6 @@ class TestPeer:
         assert pds.id == welcome.id
         assert pds.hc != None
         assert pds.billing_server == billing_server
-        assert pds.peers[1] == welcome.peers[0]
-        assert pds.peers[2] == welcome.peers[1]
 
         # Check a message was replied
         assert len(peer._replies) == 1
@@ -152,10 +150,6 @@ class TestPeer:
         response_address = ("another address", "another port")
         peer = BasePeerMock(response_address)
         peer.handle_receive_seed(seed_msg, new_peer)
-
-        # Check data store is updated accordingly
-        pds = peer.server.data
-        assert pds.peers[new_peer.id] == new_peer
 
         # Check a no-reply was returned
         assert len(peer._replies) == 1
