@@ -10,7 +10,6 @@ from uuid import UUID
 import logging
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 
 class MessageType(Enum):
@@ -79,7 +78,7 @@ class MessageSender:
 
     @classmethod
     def _send(cls, sock: socket.socket, message: Message) -> None:
-        logger.debug(f"[{sock.getsockname()}] sending msg to {sock.getpeername()}")
+        logger.info(f"[{sock.getsockname()}] sending {msg=} to {sock.getpeername()}")
         
         # Encode message
         enc_msg = cls.encode(message)
@@ -126,7 +125,7 @@ class MessageSender:
 
         # Decode
         msg = cls.decode(resp_bytes)
-        logger.debug(f"[{sock.getsockname()}] -> received message: {msg=}")
+        logger.info(f"[{sock.getsockname()}] received message: {msg=} from {sock.getpeername()}")
         return msg
 
     @classmethod
