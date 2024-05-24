@@ -66,6 +66,25 @@ class TestHiddenDataSerialization:
 
 class TestPublicHidingContextSerialization:
 
+    def get_public_context_bytes(self) -> bytes:
+        cycle_length = 1024
+        hc = HidingContext(cycle_length, None)
+        phc_bytes = hc.get_public_hiding_context().serialize()
+        del hc.cc
+        del hc
+        return phc_bytes
+
+    def test_relinearization_key_is_transferred(self):
+        phc: PublicHidingContext = PublicHidingContext.deserialize(
+            self.get_public_context_bytes()
+        )
+
+        val1 = vector(range(1024, 1))
+        enc1 = phc.encrypt(val1)
+        val2 = vector(range(1024, 3))
+        enc2 = phc.encrypt(val2)
+        phc.multiply(enc1, enc2)
+
     def test_public_hiding_context_serialization(self):
         cycle_length = 1024
         hc = HidingContext(cycle_length, None)
