@@ -7,6 +7,7 @@ from src.private_billing.core import (
     vector,
 )
 from .tools import are_equal_ciphertexts
+from openfhe import ReleaseAllContexts
 
 
 class TestHiddenDataSerialization:
@@ -70,8 +71,9 @@ class TestPublicHidingContextSerialization:
         cycle_length = 1024
         hc = HidingContext(cycle_length, None)
         phc_bytes = hc.get_public_hiding_context().serialize()
-        del hc.cc
-        del hc
+        hc.cc.ClearEvalMultKeys()
+        hc.cc.ClearEvalAutomorphismKeys()
+        ReleaseAllContexts()
         return phc_bytes
 
     def test_relinearization_key_is_transferred(self):
