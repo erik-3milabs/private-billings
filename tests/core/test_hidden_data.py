@@ -44,6 +44,9 @@ class PublicHidingContextMock(HidingContextMock):
     Public Mock for Hiding Context
     """
 
+    def activate_keys(self) -> None:
+        pass
+
 
 CYCLEN = 1
 RETAIL_PRICE, FEED_IN_TARIF, TRADING_PRICE = (

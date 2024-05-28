@@ -79,6 +79,11 @@ class HiddenData(Pickleable):
     ) -> HiddenBill:
         """Compute hidden bill based on this user data."""
 
+        # === BUG BYPASS ===
+        # Activate relinearization key.
+        # More info: see PublicHidingContext class
+        self.phc.activate_keys()
+
         # Bump zero-counts to prevent division-by-zero problems.
         # Note that this does not affect the bills or rewards:
         # if for a given timeslot either count is 0, the positive_deviation_flags and negative_deviation_flags at that

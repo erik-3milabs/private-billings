@@ -174,14 +174,11 @@ class PublicHidingContext(HidingContext, Pickleable):
         serialization = OpenFHESerializer._serialize_fhe_cc_key(
             functools.partial(self.cc.SerializeEvalMultKey, id=tag)
         )
-        if len(serialization) > 1000:
-            # Key is present. No need to activate.
-            pass
-
-        # Key is not present. Activate it.
-        OpenFHEDeserializer._deserialize_from_file(
-            self._relinearization_key_bytes, self.cc.DeserializeEvalMultKey
-        )
+        if len(serialization) < 1000:
+            # Key is not present. Try to activate it.
+            OpenFHEDeserializer._deserialize_from_file(
+                self._relinearization_key_bytes, self.cc.DeserializeEvalMultKey
+            )
 
     def __setstate__(self, state):
         relinearization_key_bytes = state["__cc__cc"][1]
