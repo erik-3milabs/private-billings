@@ -1,4 +1,5 @@
 from src.private_billing.core import (
+    SharedCycleData,
     CycleContext,
     HiddenBill,
     HiddenData,
@@ -11,6 +12,40 @@ from openfhe import ReleaseAllContexts
 
 
 class TestHiddenDataSerialization:
+    
+    def test_hidden_data_serialization_allows_multiplication(self):
+        cyc_length = 1024
+        hc = HidingContext(cyc_length, None)
+        hd = HiddenData(
+            0,
+            1,
+            hc.encrypt(vector.new(cyc_length, 1)),
+            hc.encrypt(vector.new(cyc_length, 2)),
+            hc.encrypt(vector.new(cyc_length, 3)),
+            hc.encrypt(vector.new(cyc_length, 4)),
+            hc.encrypt(vector.new(cyc_length, 5)),
+            vector.new(cyc_length, 6),
+            vector.new(cyc_length, 7),
+            vector.new(cyc_length, 0),
+            hc.get_public_hiding_context(),
+        )
+        serialization = hd.serialize()
+        
+        # "Transfer" to elsewhere
+        hc.cc.ClearEvalMultKeys()
+        hc.cc.ClearEvalAutomorphismKeys()
+        ReleaseAllContexts()
+        del hc
+        del hd
+        
+        # Deserialize
+        hd1: HiddenData = HiddenData.deserialize(serialization)
+        
+        # Test billing still works
+        cyc = CycleContext(0, cyc_length, vector.new(1024, 0.21), vector.new(1024, 0.05), vector.new(1024, 0.11))
+        scd = SharedCycleData(vector.new(1024, 5), vector.new(1024, 1), vector.new(1024, 1))
+        hd1.compute_hidden_bill(scd, cyc)
+    
     def test_hidden_data_serialization(self):
         cyc_length = 1024
         hc = HidingContext(cyc_length, None)
@@ -111,6 +146,27 @@ class TestPublicHidingContextSerialization:
         dec = [round(x) for x in dec]
         assert dec == vals
 
+
+    def test_activate_keys(self):
+        # Test whether activate_keys works AFTER deserializing a phc.
+        # Note: this is used to bypass an OpenFHE bug. See the PHC class for
+        # more details
+        cyc_length = 1024
+        hc = HidingContext(cyc_length, None)
+        phc = hc.get_public_hiding_context()
+        
+        serialization = phc.serialize()
+
+        # "Transfer" to elsewhere
+        hc.cc.ClearEvalMultKeys()
+        hc.cc.ClearEvalAutomorphismKeys()
+        ReleaseAllContexts()
+        del hc
+        del phc        
+
+        phc2: PublicHidingContext = PublicHidingContext.deserialize(serialization)
+        phc2.activate_keys()
+        
 
 class TestHiddenBillSerialization:
 

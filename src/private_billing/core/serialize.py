@@ -44,7 +44,7 @@ class OpenFHESerializer:
             return path.read_bytes()
 
     @classmethod
-    def _serialize_fhe_cc_key(cls, cc: CryptoContext, serialization_func):
+    def _serialize_fhe_cc_key(cls, serialization_func):
         """Serialize FHE CryptoContext key to bytes."""
         with TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "obj"
@@ -55,12 +55,8 @@ class OpenFHESerializer:
     def _serialize_fhe_cc(cls, cc: CryptoContext) -> Tuple[bytes]:
         """Serialize FHE CryptoContext to (tuple of) bytes."""
         cc_bytes = cls._serialize_to_file(cc)
-        relinerization_key_bytes = cls._serialize_fhe_cc_key(
-            cc, cc.SerializeEvalMultKey
-        )
-        rotation_key_bytes = cls._serialize_fhe_cc_key(
-            cc, cc.SerializeEvalAutomorphismKey
-        )
+        relinerization_key_bytes = cls._serialize_fhe_cc_key(cc.SerializeEvalMultKey)
+        rotation_key_bytes = cls._serialize_fhe_cc_key(cc.SerializeEvalAutomorphismKey)
         return (cc_bytes, relinerization_key_bytes, rotation_key_bytes)
 
 
