@@ -89,6 +89,8 @@ class MockedPublicHidingContext(PublicHidingContext):
     def __eq__(self, o):
         return self.cc == o.cc and self.public_key == o.public_key
 
+    def activate_keys(self) -> None:
+        pass
 
 def get_mock_public_hiding_context():
     return MockedPublicHidingContext("cyc", "cc", "pk")

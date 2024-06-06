@@ -156,3 +156,31 @@ class PublicHidingContext(HidingContext, Pickleable):
 
     def _generate_key_pair(self) -> KeyPair:
         raise NotImplementedError("not implemented for public")
+
+    # OpenFHE has a bug where deserializing a EvalMultKey, it _replaces_
+    # the previously known EvalMultKey(s), instead of _being added to the set_.
+    # The following two functions provide a temporary work-around.
+    # 
+    # Before using a (received) PublicHidingContext, make sure to run 
+    # its `activate_keys` function.
+    #
+    # Track the issue here:
+    # https://github.com/openfheorg/openfhe-python/issues/144
+
+    def activate_keys(self) -> None:
+        from .serialize import OpenFHEDeserializer, OpenFHESerializer
+        import functools
+        tag = self._public_key.GetKeyTag()
+        serialization = OpenFHESerializer._serialize_fhe_cc_key(
+            functools.partial(self.cc.SerializeEvalMultKey, id=tag)
+        )
+        if len(serialization) < 1000:
+            # Key is not present. Try to activate it.
+            OpenFHEDeserializer._deserialize_from_file(
+                self._relinearization_key_bytes, self.cc.DeserializeEvalMultKey
+            )
+
+    def __setstate__(self, state):
+        relinearization_key_bytes = state["__cc__cc"][1]
+        super().__setstate__(state)
+        self._relinearization_key_bytes = relinearization_key_bytes
