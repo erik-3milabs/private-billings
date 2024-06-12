@@ -33,10 +33,9 @@ class Message:
 
 
 @dataclass
-class NotificationServer(ABC):
+class RequestReplyServer(ABC):
     """
-    Server working with one-way communcation: never replies to messages right away.
-    In case of a response, seeks contact with sender.
+    Request-Reply Server
 
     :param encoder: Encoder used to encode/decode messages to/from bytes.
     """
@@ -68,7 +67,6 @@ class NotificationServer(ABC):
         while self.keep_running:
             msg = self.recv()
             if msg:
-                self._reply("")
                 self._handle(msg)
 
     def send(self, msg: Message, target: TCPAddress) -> Any:
@@ -88,9 +86,9 @@ class NotificationServer(ABC):
         for target in targets:
             self.send(msg, target)
 
-    def _reply(self, msg: Message) -> Any:
+    def reply(self, msg: Message) -> Any:
         """
-        Reply on current connection.
+        Reply on the current connection.
         :param msg: msg to reply.
         """
         enc = self.encoder.encode(msg)

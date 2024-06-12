@@ -1,5 +1,10 @@
 from typing import Dict
-from .network import PeerToPeerBillingBaseServer, NodeInfo, no_verification_required
+from .network import (
+    PeerToPeerBillingBaseServer,
+    NodeInfo,
+    no_verification_required,
+    replies,
+)
 from .server import TCPAddress
 from .core import (
     Bill,
@@ -23,11 +28,6 @@ from .messages import (
     SeedMessage,
     UserType,
 )
-
-
-def skip_verification(func):
-    func.skip_verification = True
-    return func
 
 
 class CoreServer(PeerToPeerBillingBaseServer):
@@ -131,15 +131,16 @@ class CoreServer(PeerToPeerBillingBaseServer):
 
     ### Handle incoming bill request
 
+    @replies
     @no_verification_required
-    def handle_get_bill(self, msg: GetBillMessage, origin: TCPAddress) -> None:
+    def handle_get_bill(self, msg: GetBillMessage, origin: NodeInfo) -> None:
         bill = self.bills.get(msg.cycle_id, None)
-        self._reply(BillMessage(bill), origin)
-        
+        self.reply(BillMessage(bill), origin)
+
     ### Handle Cycle Context
-    
+
     @no_verification_required
-    def handle_cycle_context(self, msg: ContextMessage, origin: TCPAddress) -> None:
+    def handle_cycle_context(self, msg: ContextMessage, origin: NodeInfo) -> None:
         # do not use this
         pass
 

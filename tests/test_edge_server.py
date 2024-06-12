@@ -32,13 +32,13 @@ class BaseEdgeServerMock(EdgeServer):
         self.__replies__ = []
         self.__sent__ = []
 
-    def _execute(self, handler, *args) -> None:
+    def async_execute(self, handler, *args) -> None:
         handler(*args)
 
     def send(self, message: Message, target: NodeInfo):
         self.__sent__.append((message, target))
 
-    def _reply(self, msg: Message) -> None:
+    def reply(self, msg: Message) -> None:
         pass
 
     @property

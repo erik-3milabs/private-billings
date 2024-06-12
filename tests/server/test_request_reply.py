@@ -10,7 +10,7 @@ from src.private_billing.core import (
     vector,
 )
 from src.private_billing.server import (
-    NotificationServer,
+    RequestReplyServer,
     TCPAddress,
     Message,
     PickleEncoder,
@@ -37,10 +37,10 @@ class TestTCPAddress:
         assert hash1 == hash2
 
 
-class TestNotificationServerTerminate:
+class TestRequestReplyServerTerminate:
 
     def test_terminate(self):
-        server = NotificationServer(None)
+        server = RequestReplyServer(None)
         thread = Thread(target=server.start)
         thread.start()
         server.terminate()
@@ -48,20 +48,21 @@ class TestNotificationServerTerminate:
         assert not thread.is_alive()
 
 
-class NotificationServerTester(NotificationServer):
+class RequestReplyServerTester(RequestReplyServer):
 
     def __post_init__(self):
         super().__post_init__()
         self.messages = []
 
     def _handle(self, msg: Message) -> None:
-        self.messages.append(msg)
+        self.messages.append(msg)       
+        self.reply("")
 
 
 @pytest.fixture
 def receiving_server():
     # start server
-    server = NotificationServerTester(PickleEncoder)
+    server = RequestReplyServerTester(PickleEncoder)
     thread = Thread(target=server.start)
     thread.start()
 
@@ -72,13 +73,13 @@ def receiving_server():
     thread.join(3)
 
 
-class TestNotificationServerSend:
+class TestRequestReplyServerSend:
 
     def test_send_msg(self, receiving_server):
         receiving_server, target = receiving_server
         
         # Setup sending server
-        server = NotificationServerTester(PickleEncoder)
+        server = RequestReplyServerTester(PickleEncoder)
 
         # Send message
         msg = "hello!"
@@ -91,7 +92,7 @@ class TestNotificationServerSend:
         receiving_server, target = receiving_server
 
         # Setup sending server
-        sending_server = NotificationServerTester(PickleEncoder)
+        sending_server = RequestReplyServerTester(PickleEncoder)
 
         # Send large message
         msg = DataMessage(
@@ -114,7 +115,7 @@ class TestSendIntegration:
         receiving_server, target = receiving_server
 
         # Setup sending server
-        sending_server = NotificationServerTester(PickleEncoder)
+        sending_server = RequestReplyServerTester(PickleEncoder)
 
         # Construct message
         cycle_length = 1024

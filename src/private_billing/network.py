@@ -5,7 +5,7 @@ import hashlib
 
 from .messages import ConnectMessage, BillingMessageType, SignedMessage, UserType
 from .server import (
-    NotificationServer,
+    RequestReplyServer,
     Message,
     Signer,
     TransferablePublicKey,
@@ -38,14 +38,20 @@ def no_verification_required(func):
     return func
 
 
+def replies(func):
+    """Decorator for handlers that reply to the request."""
+    func.replies = True
+    return func
+
+
 class NoValidSignatureException(Exception):
     pass
 
 
-class PeerToPeerBillingBaseServer(NotificationServer):
+class PeerToPeerBillingBaseServer(RequestReplyServer):
     """
-    Base server for the PeerToPeer Billing network
-    Implements Network discovery layer
+    Base server for the PeerToPeer Billing network.
+    Implements Network discovery layer.
     """
 
     def __init__(self, address=TCPAddress("localhost", 5555)) -> None:
@@ -137,16 +143,29 @@ class PeerToPeerBillingBaseServer(NotificationServer):
         msg_type = BillingMessageType(msg.type.value)
         handler = self.handlers.get(msg_type, self._fallback_handler)
 
+        # Send empty reply
+        handler_replies = getattr(handler, "replies", False)
+        if not handler_replies:
+            self.reply("")
+
         # Validity check
         requires_validation = getattr(handler, "require_verification", True)
         if requires_validation and not has_valid_signature:
             raise NoValidSignatureException()
 
         origin = self.get_node_info(msg.reply_address)
-        self._execute(handler, msg, origin)
+        
+        if handler_replies:
+            self.execute(handler, msg, origin)
+        else:
+            self.async_execute(handler, msg, origin)
 
-    def _execute(self, handler: Callable, *args) -> None:
-        """Execute message handler."""
+    def execute(self, handler: Callable, *args) -> None:
+        """Execute message handler synchronously."""
+        handler(*args)
+
+    def async_execute(self, handler: Callable, *args) -> None:
+        """Execute message handler asynchronously."""
         self.tp.apply_async(handler, args=args)
 
     def _fallback_handler(self, msg: Message, origin: NodeInfo) -> None:
