@@ -40,9 +40,16 @@ class TransferablePublicKey:
             case _:
                 return NotImplementedError("")
 
-    def verify_signature(self, obj: Any, signature):
+    def verify_signature(self, obj: Any, signature) -> bool:
         """Verify a signature on an object under this key."""
-        Signer.verify(obj, signature, self)
+        try:
+            Signer.verify(obj, signature, self)
+            return True
+        except Exception:
+            return False
+
+    def __hash__(self) -> int:
+        return hash((self.public_key_bytes, self.encoding, self.format))
 
 
 class Signer:

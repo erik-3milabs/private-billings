@@ -1,91 +1,58 @@
 import random
-import socket
-from socketserver import TCPServer
 from threading import Thread
 from time import sleep
 from typing import Tuple
+
+import zmq
+from src.private_billing import CoreServer, EdgeServer
 from src.private_billing.core import Bill, CycleContext, Data, vector
-from src.private_billing import (
-    BillingServer,
-    BillingServerDataStore,
-    Peer,
-    PeerDataStore,
-    MarketOperator,
-    MarketOperatorDataStore,
-)
 from src.private_billing.messages import (
     BillMessage,
-    BootMessage,
+    HiddenBillMessage,
     ContextMessage,
     DataMessage,
     GetBillMessage,
-    GetContextMessage,
 )
-from src.private_billing.server import MessageSender, Target
+from src.private_billing.server import TCPAddress, PickleEncoder
 
 
 class TestIntegration:
-
-    def launch_boot_thread(self, mc, address):
-        sleep(0.5)
-        boot = BootMessage(mc)
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect(address)
-            MessageSender._send(sock, boot)
-
-    def launch_market_operator(self, address) -> Tuple[TCPServer, Thread]:
-        operator = TCPServer(address, MarketOperator)
-
-        # Configure server
-        mods = MarketOperatorDataStore()
-        mods.cycle_length = 1024
-        operator.data = mods
-
-        print(f"Running operator on {operator.server_address}.")
-        thread = Thread(target=operator.serve_forever)
+    
+    def launch_edge(self, address, cyc_len) -> Tuple[EdgeServer, Thread]:
+        edge = EdgeServer(address, cyc_len)
+        thread = Thread(target=edge.start)
         thread.start()
-        return operator, thread
+        print(f"Running edge on {address}.")
+        return edge, thread
 
-    def launch_billing_server(self, address) -> Tuple[TCPServer, Thread]:
-        server = TCPServer(address, BillingServer)
-
-        # Launch
-        print(f"Running server on {server.server_address}.")
-        thread = Thread(target=server.serve_forever)
+    def launch_core(self, address, edge_address) -> Tuple[CoreServer, Thread]:
+        core = CoreServer(address)
+        thread = Thread(target=core.start, args=(edge_address,))
         thread.start()
-        return server, thread
+        print(f"Running core on {address}.")
+        return core, thread
 
-    def launch_peer(self, address) -> Tuple[TCPServer, Thread]:
-        peer = TCPServer(address, Peer)
-
-        # Launch peer
-        print(f"Launching peer on {peer.server_address}.")
-        thread = Thread(target=peer.serve_forever)
-        thread.start()
-        return peer, thread
+    def send(self, msg, target: TCPAddress) -> None:
+        ctxt = zmq.Context()
+        sock = ctxt.socket(zmq.REQ)
+        with sock.connect(str(target)):
+            enc = PickleEncoder.encode(msg)
+            sock.send(enc)
+            sock.recv()
 
     def test_integration(self):
-        nr_peers = 10
+        cycle_len = 1024
+        nr_cores = 10
         port_range = list(range(5000, 6000))
-        ports = random.choices(port_range, k=nr_peers + 2)
+        ports = random.choices(port_range, k=nr_cores + 1)
 
         # Parties
-        market_address = "localhost", ports[0]
-        market_operator = self.launch_market_operator(market_address)
-        billing_server = self.launch_billing_server(("localhost", ports[1]))
-        peer_ports = ports[2:]
-        peers = [self.launch_peer(("localhost", port)) for port in peer_ports]
-
-        # Send boot messages
-        print("giving boot signals")
-        boot = BootMessage(market_address)
-        for port in ports[1:]:
-            target = Target(None, ("localhost", port))
-            resp = MessageSender.send(boot, target)
-            print(port, resp)
+        edge_address = TCPAddress("localhost", ports[0])
+        edge = self.launch_edge(edge_address, cycle_len)
+        core_ports = ports[1:]
+        cores = [self.launch_core(TCPAddress("localhost", port), edge_address) for port in core_ports]
 
         # Distribute cycle context
-        cycle_len = 1024
         cyc = CycleContext(
             0,
             cycle_len,
@@ -93,57 +60,48 @@ class TestIntegration:
             vector.new(cycle_len, 0.05),
             vector.new(cycle_len, 0.11),
         )
-        cyc_msg = ContextMessage(cyc)
-        target = Target(None, market_address)
-        MessageSender.send(cyc_msg, target)
+        cyc_msg = ContextMessage(None, cyc)
+        self.send(cyc_msg, edge_address)
+        
+        # Allow all to settle in
+        sleep(1)
 
         # Have peers send data to billing server
-        for idx, port in enumerate(peer_ports):
-            target = Target(None, ("localhost", port))
-
-            # Request cycle context
-            gc_msg = GetContextMessage(0)
-            resp: ContextMessage = MessageSender.send(gc_msg, target)
-            context = resp.context
+        for idx, port in enumerate(core_ports):
+            target = TCPAddress("localhost", port)
 
             # Generate random data
-            cycle_len = context.cycle_length
             data = Data(None, 0, vector.new(cycle_len, idx), vector.new(cycle_len, idx))
 
             # Send data
-            print(f"send data {idx}:{port}")
-            data_msg = DataMessage(data)
-            resp = MessageSender.send(data_msg, target)
+            data_msg = DataMessage(None, data)
+            self.send(data_msg, target)
+            print(f"sent data {idx}:{port}")
+
+        # Wait it out
+        sleep(5)
 
         # Get bill from peers
-        for idx, port in enumerate(peer_ports):
-            target = Target(None, ("localhost", port))
-
-            # Request bill
-            msg = GetBillMessage(0)
-            received = False
-            while not received:
-                resp: BillMessage = MessageSender.send(msg, target)
-                received = resp.bill != None
-
+        for idx, (core, _) in enumerate(cores):
+            target = TCPAddress("localhost", port)
+            
+            # is_ready = False
+            # while not is_ready:
+            #     is_ready = 0 in core.bills
+            bill = core.bills[0]
+            
             # Test bill correctness
-            assert isinstance(resp, BillMessage)
-            assert isinstance(resp.bill, Bill)
-            assert isinstance(resp.bill.bill, vector)
-            assert resp.bill.bill == vector.new(1024, idx * 0.11)
-            assert isinstance(resp.bill.reward, vector)
-            assert resp.bill.reward == vector.new(1024)
+            assert isinstance(bill.bill, vector)
+            assert bill.bill == vector.new(1024, idx * 0.11)
+            assert isinstance(bill.reward, vector)
+            assert bill.reward == vector.new(1024)
 
         # Stop all threads
-        server, thread = market_operator
-        server.shutdown()
+        server, thread = edge
+        server.terminate()
         thread.join()
 
-        server, thread = billing_server
-        server.shutdown()
-        thread.join()
-
-        for peer in peers:
+        for peer in cores:
             server, thread = peer
-            server.shutdown()
+            server.terminate()
             thread.join()

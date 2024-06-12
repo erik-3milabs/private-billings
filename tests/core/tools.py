@@ -1,5 +1,7 @@
 from src.private_billing.core import (
+    Bill,
     CycleContext,
+    HiddenBill,
     HidingContext,
     SharedMaskGenerator,
     Int64Convertor,
@@ -110,3 +112,7 @@ def are_equal_ciphertexts(c1: Ciphertext, c2: Ciphertext, hc: HidingContext) -> 
     for e1, e2 in zip(p1, p2):
         are_equal &= abs(e1 - e2) < ERROR
     return are_equal
+
+class HiddenBillMock(HiddenBill):
+    def reveal(self, hc: HidingContext):
+        return Bill(self.cycle_id, self.hidden_bill, self.hidden_reward)

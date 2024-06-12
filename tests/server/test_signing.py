@@ -1,8 +1,26 @@
 import pickle
 
 import pytest
-from src.private_billing.server.signing import Signer
+from src.private_billing.server.signing import Signer, TransferablePublicKey
 from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives.asymmetric import ec
+
+@pytest.fixture
+def random_pk():
+    return ec.generate_private_key(ec.SECP256K1()).public_key()
+
+class TestTransferablePublicKey:
+    
+    def test_hash(self, random_pk):
+        tpk = TransferablePublicKey(random_pk)
+        assert isinstance(hash(tpk), int)
+
+    def test_hash_is_constant(self, random_pk):
+        tpk = TransferablePublicKey(random_pk)
+        tpk = Signer().get_transferable_public_key()
+        hash1 = hash(tpk)
+        hash2 = hash(tpk)
+        assert hash1 == hash2
 
 
 class TestSigner:
