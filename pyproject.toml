@@ -22,6 +22,7 @@ dependencies = [
     "pybind11",
     "pytest",
     "cryptography",
+    "pyzmq",
 ]
 
 [project.urls]
