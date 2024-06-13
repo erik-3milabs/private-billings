@@ -12,7 +12,7 @@ from .server import (
     PickleEncoder,
     TCPAddress,
 )
-from .log import logger
+from .log import full_stack, logger
 
 
 @dataclass
@@ -122,6 +122,7 @@ class PeerToPeerBillingBaseServer(RequestReplyServer):
         """
         if isinstance(target, NodeInfo):
             target = target.address
+        logger.info(f"sending {type(msg)=} to {target=}")
         if sign:
             msg = self.sign_msg(msg)
         super().send(msg, target)
@@ -172,11 +173,15 @@ class PeerToPeerBillingBaseServer(RequestReplyServer):
 
     def execute(self, handler: Callable, *args) -> None:
         """Execute message handler synchronously."""
-        handler(*args)
+        try:
+            handler(*args)
+        except Exception as e:
+            logger.error(str(e))
+            logger.debug(full_stack())
 
     def async_execute(self, handler: Callable, *args) -> None:
         """Execute message handler asynchronously."""
-        self.tp.apply_async(handler, args=args)
+        self.tp.apply_async(self.execute, args=(handler, *args))
 
     def _fallback_handler(self, msg: Message, origin: NodeInfo) -> None:
         print(

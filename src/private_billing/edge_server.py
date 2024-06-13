@@ -11,7 +11,7 @@ from .messages import (
     BillingMessageType,
     UserType,
 )
-from .log import logger
+from .log import full_stack, logger
 
 
 class EdgeServer(PeerToPeerBillingBaseServer):
@@ -79,6 +79,7 @@ class EdgeServer(PeerToPeerBillingBaseServer):
                 logger.info(f"finished billing {cycle_id=}")
             except Exception as e:
                 logger.error(f"billing {cycle_id=} failed: {str(e)}")
+                logger.debug(full_stack())
         else:
             logger.info(f"not ready for billing {cycle_id=}")
 
