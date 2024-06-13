@@ -145,8 +145,7 @@ class PeerToPeerBillingBaseServer(RequestReplyServer):
 
         logger.debug(f"received message {type(msg)=} from {origin.address}")
 
-        msg_type = BillingMessageType(msg.type.value)
-        handler = self.handlers.get(msg_type, self._fallback_handler)
+        handler = self.handlers.get(msg.type, self._fallback_handler)
 
         # Validity check
         requires_validation = getattr(handler, "require_verification", True)
@@ -183,6 +182,7 @@ class PeerToPeerBillingBaseServer(RequestReplyServer):
         """Execute message handler asynchronously."""
         self.tp.apply_async(self.execute, args=(handler, *args))
 
+    @no_verification_required
     def _fallback_handler(self, msg: Message, origin: NodeInfo) -> None:
         print(
             f"ERROR: received message of {msg.type=} from {origin=}, which I cannot handle."

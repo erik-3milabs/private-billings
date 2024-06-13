@@ -83,7 +83,7 @@ class EdgeServer(PeerToPeerBillingBaseServer):
         else:
             logger.info(f"not ready for billing {cycle_id=}")
 
-    def run_billing(self, cycle_id: CycleID) -> None:
+    def run_billing(self, cycle_id: CycleID) -> Dict[ClientID, HiddenBill]:
         """Run the billing process for the given cycle"""
         return self.shared_biller.compute_bills(cycle_id)
 
