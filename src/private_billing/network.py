@@ -12,6 +12,7 @@ from .server import (
     PickleEncoder,
     TCPAddress,
 )
+from .log import logger
 
 
 @dataclass
@@ -141,12 +142,18 @@ class PeerToPeerBillingBaseServer(RequestReplyServer):
         msg, has_valid_signature = self.verify_signature(msg)
         origin = self.get_node_info(msg.reply_address)
 
+        logger.debug(f"received message {type(msg)=} from {origin.address}")
+
         msg_type = BillingMessageType(msg.type.value)
         handler = self.handlers.get(msg_type, self._fallback_handler)
 
         # Validity check
         requires_validation = getattr(handler, "require_verification", True)
         if requires_validation and not has_valid_signature:
+            logger.error(
+                f"message {type(msg)=} from {origin=} has invalid signature."
+                "aborting..."
+            )
 
             # Send required reply to prevent connection problems
             self.reply("")

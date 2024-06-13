@@ -11,6 +11,7 @@ from .messages import (
     BillingMessageType,
     UserType,
 )
+from .log import logger
 
 
 class EdgeServer(PeerToPeerBillingBaseServer):
@@ -71,8 +72,15 @@ class EdgeServer(PeerToPeerBillingBaseServer):
     def try_run_billing(self, cycle_id: CycleID) -> None:
         """Attempt to run the billing process for the given cycle"""
         if self.shared_biller.is_ready(cycle_id):
-            bills = self.run_billing(cycle_id)
-            self.send_hidden_bills(bills)
+            try:
+                logger.info(f"start billing {cycle_id=}...")
+                bills = self.run_billing(cycle_id)
+                self.send_hidden_bills(bills)
+                logger.info(f"finished billing {cycle_id=}")
+            except Exception as e:
+                logger.error(f"billing {cycle_id=} failed: {str(e)}")
+        else:
+            logger.info(f"not ready for billing {cycle_id=}")
 
     def run_billing(self, cycle_id: CycleID) -> None:
         """Run the billing process for the given cycle"""

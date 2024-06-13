@@ -61,6 +61,6 @@ class SharedCycleData:
         :param cyc: cycle context to check for
         :raises: AssertionError when object is invalid.
         """
-        assert len(self.total_deviations) == cyc.cycle_length
-        assert len(self.total_p2p_consumers) == cyc.cycle_length
-        assert len(self.total_p2p_producers) == cyc.cycle_length
+        assert len(self.total_deviations) == cyc.cycle_length, f"{len(self.total_deviations)=} =/= {cyc.cycle_length=}"
+        assert len(self.total_p2p_consumers) == cyc.cycle_length, f"{len(self.total_p2p_consumers)=} =/= {cyc.cycle_length=}"
+        assert len(self.total_p2p_producers) == cyc.cycle_length, f"{len(self.total_p2p_producers)=} =/= {cyc.cycle_length=}"
