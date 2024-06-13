@@ -11,6 +11,7 @@ from .core import (
     CycleID,
     CycleContext,
     Data,
+    HiddenData,
     HidingContext,
     Int64ToFloatConvertor,
     SharedMaskGenerator,
@@ -108,18 +109,15 @@ class CoreServer(PeerToPeerBillingBaseServer):
     @no_verification_required
     def handle_data(self, msg: DataMessage, origin: NodeInfo) -> None:
         """Handle incoming `data` objects."""
-        edge_nodes = filter(
-            lambda x: x.role == UserType.EDGE, self.network_members.values()
-        )
-        for node in edge_nodes:
-            self.send_data(msg.data, node)
+        hidden_data = self.hide_data(msg.data)
+        msg = HiddenDataMessage(self.address, hidden_data)
+        self.broadcast(msg, self.network_edges)
 
-    def send_data(self, data: Data, target: NodeInfo) -> None:
-        """Send `data` to `target`."""
+    def hide_data(self, data: Data) -> HiddenData:
+        """Convert `Data` to `HiddenData`."""
         hidden_data = data.hide(self.hc)
         hidden_data.client = self.id
-        msg = HiddenDataMessage(self.address, hidden_data)
-        self.send(msg, target)
+        return hidden_data
 
     ### Handle incoming bill
 
