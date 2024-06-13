@@ -139,22 +139,25 @@ class PeerToPeerBillingBaseServer(RequestReplyServer):
         """Handle an incoming message"""
         # Handle signature
         msg, has_valid_signature = self.verify_signature(msg)
+        origin = self.get_node_info(msg.reply_address)
 
         msg_type = BillingMessageType(msg.type.value)
         handler = self.handlers.get(msg_type, self._fallback_handler)
 
-        # Send empty reply
+        # Validity check
+        requires_validation = getattr(handler, "require_verification", True)
+        if requires_validation and not has_valid_signature:
+
+            # Send required reply to prevent connection problems
+            self.reply("")
+
+            raise NoValidSignatureException()
+
+        # Send empty reply if applicable
         handler_replies = getattr(handler, "replies", False)
         if not handler_replies:
             self.reply("")
 
-        # Validity check
-        requires_validation = getattr(handler, "require_verification", True)
-        if requires_validation and not has_valid_signature:
-            raise NoValidSignatureException()
-
-        origin = self.get_node_info(msg.reply_address)
-        
         if handler_replies:
             self.execute(handler, msg, origin)
         else:
