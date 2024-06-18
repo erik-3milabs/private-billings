@@ -192,9 +192,18 @@ class Data:
             hc.encrypt(self.accepted_consumer_flags),
             hc.encrypt(self.accepted_producer_flags),
             hc.encrypt(self.positive_deviation_flags),
-            hc.mask(self.individual_deviations, 0),
-            hc.mask(self.p2p_consumer_flags, 1),
-            hc.mask(self.p2p_producer_flags, 2),
+            hc.mask(
+                self.individual_deviations,
+                hc.get_masking_iv(self.cycle_id, "individual_deviations"),
+            ),
+            hc.mask(
+                self.p2p_consumer_flags,
+                hc.get_masking_iv(self.cycle_id, "p2p_consumer_flags"),
+            ),
+            hc.mask(
+                self.p2p_producer_flags,
+                hc.get_masking_iv(self.cycle_id, "p2p_producer_flags"),
+            ),
             hc.get_public_hiding_context(),
         )
 

@@ -57,6 +57,9 @@ class MockedHidingContext(HidingContext):
     def _secret_key(self):
         return "sk"
 
+    def get_masking_iv(self, round: int, obj_name: str) -> int:
+        return 5
+
     def mask(self, values: list[float], iv: int) -> list[float]:
         return [v + iv for v in values]
 

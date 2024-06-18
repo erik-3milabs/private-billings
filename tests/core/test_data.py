@@ -186,8 +186,8 @@ class TestDataHide:
         assert hd.accepted_producer_flags == [f + 1 for f in d.accepted_producer_flags]
         assert hd.positive_deviation_flags == [f + 1 for f in positive_deviations]
         assert hd.masked_individual_deviations == [
-            d + 0 for d in d.individual_deviations
+            d + 5 for d in d.individual_deviations
         ]
-        assert hd.masked_p2p_consumer_flags == [f + 1 for f in consumer_flags]
-        assert hd.masked_p2p_producer_flags == [f + 2 for f in producer_flags]
+        assert hd.masked_p2p_consumer_flags == [f + 5 for f in consumer_flags]
+        assert hd.masked_p2p_producer_flags == [f + 5 for f in producer_flags]
         assert hd.phc == mhc.get_public_hiding_context()

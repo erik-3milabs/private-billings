@@ -1,5 +1,6 @@
 from __future__ import annotations
 import math
+import hashlib
 
 from .serialize import Pickleable
 from .utils import vector
@@ -42,6 +43,17 @@ class HidingContext:
 
     def get_public_hiding_context(self) -> PublicHidingContext:
         return PublicHidingContext(self.cycle_length, self.cc, self.public_key)
+
+    def get_masking_iv(self, round: int, obj_name: str) -> int:
+        """
+        Get an initialisation vector (iv) for masking.
+
+        :param round: round of masking
+        :param obj_name: name of object being masked
+        :return: initialization vector
+        """
+        hash = hashlib.sha256(f"{round=}, {obj_name}".encode())
+        return int.from_bytes(hash.digest(), "little")
 
     def mask(self, values: vector[float], iv: int) -> vector[float]:
         """
