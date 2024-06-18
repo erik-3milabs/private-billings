@@ -24,7 +24,7 @@ class BaseCoreServerMock(CoreServer):
         self.__sent__ = []
 
     def async_execute(self, handler, *args) -> None:
-        self.execute(handler, args)
+        self.execute(handler, *args)
 
     def send(self, message: Message, target: NodeInfo):
         self.__sent__.append((message, target))
