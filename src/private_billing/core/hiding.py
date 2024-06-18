@@ -105,11 +105,15 @@ class HidingContext:
         """Multiply ciphertexts"""
         return self.cc.EvalMult(ctxt_1, ctxt_2)
 
-    def _generate_crypto_context(self) -> CryptoContext:
-        """Generate the cryptographic context used in this context."""
+    def _generate_context_parameters(
+        self,
+        dcrtBits=55,
+        firstMod=59,
+        ring_dim_log=14,
+        num_large_digits=4,
+        multiplicative_depth=3,
+    ):
         ciphertext_len = int(math.pow(2, math.ceil(math.log2(self.cycle_length))))
-        dcrtBits = 55
-        firstMod = 59
 
         parameters = CCParamsCKKSRNS()
         parameters.SetScalingModSize(dcrtBits)
@@ -117,12 +121,19 @@ class HidingContext:
         parameters.SetFirstModSize(firstMod)
         parameters.SetSecretKeyDist(SecretKeyDist.UNIFORM_TERNARY)
 
-        parameters.SetRingDim(1 << 14)
+        parameters.SetRingDim(1 << ring_dim_log)
         parameters.SetBatchSize(ciphertext_len)
 
-        parameters.SetNumLargeDigits(4)
+        parameters.SetNumLargeDigits(num_large_digits)
         parameters.SetKeySwitchTechnique(KeySwitchTechnique.HYBRID)
-        parameters.SetMultiplicativeDepth(3)
+        parameters.SetMultiplicativeDepth(multiplicative_depth)
+
+        return parameters
+
+    def _generate_crypto_context(self, parameters=None) -> CryptoContext:
+        """Generate the cryptographic context used in this context."""
+        if not parameters:
+            parameters = self._generate_context_parameters()
 
         cc = GenCryptoContext(parameters)
 
@@ -172,8 +183,8 @@ class PublicHidingContext(HidingContext, Pickleable):
     # OpenFHE has a bug where deserializing a EvalMultKey, it _replaces_
     # the previously known EvalMultKey(s), instead of _being added to the set_.
     # The following two functions provide a temporary work-around.
-    # 
-    # Before using a (received) PublicHidingContext, make sure to run 
+    #
+    # Before using a (received) PublicHidingContext, make sure to run
     # its `activate_keys` function.
     #
     # Track the issue here:
@@ -182,6 +193,7 @@ class PublicHidingContext(HidingContext, Pickleable):
     def activate_keys(self) -> None:
         from .serialize import OpenFHEDeserializer, OpenFHESerializer
         import functools
+
         tag = self._public_key.GetKeyTag()
         serialization = OpenFHESerializer._serialize_fhe_cc_key(
             functools.partial(self.cc.SerializeEvalMultKey, id=tag)
