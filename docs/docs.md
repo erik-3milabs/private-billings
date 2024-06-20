@@ -1,4 +1,5 @@
 # Private-billings
+A brief overview of how to use the library is provided [here](using_the_library.md).
 
 This repository provides a proof-of-concept library that acts as a framework for performing privacy-preserving billing in peer-to-peer energy trading markets.
 Background on billing in peer-to-peer markets is provided [here](billing_model.md).
