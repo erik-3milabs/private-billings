@@ -1,72 +1,80 @@
 services:
 
-  market:
-    image: private-billing:0.0.1
+  edge:
+    image: private-billing
     ports:
       - 5555:5555
-    command: python3 launch.py market market 5555 market
+    environment:
+      - SERVER_TYPE=edge
+      - EDGE_HOST=edge
+      - EDGE_PORT=5555
     networks:
       - billing
 
-  billing:
-    image: private-billing:0.0.1
-    ports:
-      - 5554:5554
-    command: python3 launch.py bill market 5555 billing
-    networks:
-      - billing
-    depends_on:
-      - "market"
-
-  peer0:
-    image: private-billing:0.0.1
+  core0:
+    image: private-billing
     ports:
       - 5560:5560
-    command: python3 launch.py peer market 5555 peer0 5560
+    environment:
+      - SERVER_TYPE=core
+      - EDGE_HOST=edge
+      - EDGE_PORT=5555
+      - CORE_HOST=core0
+      - CORE_PORT=5560
     networks:
       - billing
-    depends_on:
-      - "market"
 
-  peer1:
-    image: private-billing:0.0.1
+  core1:
+    image: private-billing
     ports:
       - 5561:5561
-    command: python3 launch.py peer market 5555 peer1 5561
+    environment:
+      - SERVER_TYPE=core
+      - EDGE_HOST=edge
+      - EDGE_PORT=5555
+      - CORE_HOST=core1
+      - CORE_PORT=5561
     networks:
       - billing
-    depends_on:
-      - "market"
 
-  peer2:
-    image: private-billing:0.0.1
+  core2:
+    image: private-billing
     ports:
       - 5562:5562
-    command: python3 launch.py peer market 5555 peer2 5562
+    environment:
+      - SERVER_TYPE=core
+      - EDGE_HOST=edge
+      - EDGE_PORT=5555
+      - CORE_HOST=core2
+      - CORE_PORT=5562
     networks:
       - billing
-    depends_on:
-      - "market"
-
-  peer3:
-    image: private-billing:0.0.1
+  
+  core3:
+    image: private-billing
     ports:
       - 5563:5563
-    command: python3 launch.py peer market 5555 peer3 5563
+    environment:
+      - SERVER_TYPE=core
+      - EDGE_HOST=edge
+      - EDGE_PORT=5555
+      - CORE_HOST=core3
+      - CORE_PORT=5563
     networks:
       - billing
-    depends_on:
-      - "market"
 
-  peer4:
-    image: private-billing:0.0.1
+  core4:
+    image: private-billing
     ports:
       - 5564:5564
-    command: python3 launch.py peer market 5555 peer4 5564
+    environment:
+      - SERVER_TYPE=core
+      - EDGE_HOST=edge
+      - EDGE_PORT=5555
+      - CORE_HOST=core4
+      - CORE_PORT=5564
     networks:
       - billing
-    depends_on:
-      - "market"
 
 networks:
   billing:

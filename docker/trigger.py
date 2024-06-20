@@ -1,11 +1,8 @@
 import sys
-from src.private_billing.core.data import Data
-from src.private_billing.core.utils import vector
-from src.private_billing.server.encoding import PickleEncoder
-from src.private_billing.server.request_reply import TCPAddress
-from src.private_billing.core.cycle import CycleContext
-from src.private_billing.messages import ContextMessage, DataMessage
 import zmq
+from src.private_billing.core import Data, vector, CycleContext
+from src.private_billing.server import PickleEncoder, TCPAddress
+from src.private_billing.messages import ContextMessage, DataMessage
 
 ctxt = zmq.Context()
 sock = ctxt.socket(zmq.REQ)
@@ -14,7 +11,8 @@ def send(msg, address: TCPAddress):
     with sock.connect(str(address)):
         enc = PickleEncoder.encode(msg)
         sock.send(enc)
-        sock.recv()
+        repl = sock.recv()
+    return PickleEncoder.decode(repl)
 
 def send_context(cycle_id, cyclen, address) -> None:
     ctxt = CycleContext(
@@ -42,8 +40,7 @@ if __name__ == "__main__":
     
     edge_port = 5555
     edge_address = TCPAddress("localhost", edge_port)
-    
-    ports = list(range(5556, 5560))
+    ports = list(range(5560, 5565))
     addresses = list(map(lambda x: TCPAddress("localhost", x), ports))
     
     send_context(cycle_id, cyclen, edge_address)

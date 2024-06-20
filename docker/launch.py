@@ -1,34 +1,23 @@
-import sys
-from src.private_billing import (
-    launch_market_operator,
-    launch_peer,
-    launch_billing_server,
-)
+import os
+from src.private_billing.server import TCPAddress
+from src.private_billing import launch_core, launch_edge
 
 if __name__ == "__main__":
-    type_ = sys.argv[1]
+    server_type = os.environ.get("SERVER_TYPE")
     
-    # market address
-    market_host = sys.argv[2]
-    market_port = int(sys.argv[3])
-    market_address = market_host, market_port
-    
-    # server host
-    host = sys.argv[4]
+    # Edge address settings
+    edge_host = os.environ.get("EDGE_HOST", "0.0.0.0")
+    edge_port = os.environ.get("EDGE_PORT", 5555)
+    edge_address = TCPAddress(edge_host, edge_port)
 
-    # Settings
-    cyc_len = 672  # nr of 15m slots in a week.
-    
-    match type_:
-        case "bill":
-            server_address = host, 5554
-            launch_billing_server(server_address, market_address)
-        case "peer":
-            port = sys.argv[5]
-            server_address = host, int(port)
-            launch_peer(server_address, market_address)
-        case "market":
-            server_address = host, 5555
-            launch_market_operator(server_address, cyc_len)
+    match server_type:
+        case "edge":
+            cyc_len = os.environ.get("CYCLE_LENGTH", 672)
+            launch_edge(edge_address, cyc_len)
+        case "core":
+            core_host = os.environ.get("CORE_HOST", "0.0.0.0")
+            core_port = os.environ.get("CORE_PORT", 5556)
+            server_address = TCPAddress(core_host, core_port)
+            launch_core(server_address, edge_address)
         case _:
-            raise ValueError(f"{type_} is invalid type")
+            raise ValueError(f"{server_type} is invalid type")

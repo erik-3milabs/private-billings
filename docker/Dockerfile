@@ -38,6 +38,7 @@ ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
 # Clone and build OpenFHE-Python
 RUN git clone https://github.com/openfheorg/openfhe-python.git \
     && cd openfhe-python \
+    && git checkout 87700c2c250ff39eaaa5cbe4daed3e5cb5d9b726 \
     && mkdir build \
     && cd build \
     && cmake .. \
@@ -58,4 +59,4 @@ COPY src ./src
 RUN useradd app
 USER app
 
-CMD python3 launch.py $PRIVATE_BILLING_SERVER_TYPE
+CMD python3 launch.py
