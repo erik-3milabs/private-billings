@@ -1,8 +1,10 @@
 # Private Billings
 
-This repository provides a proof-of-concept implementation of the [private billings project](todo).
-This project enables computing bills and rewards for peers trading energy in a peer-to-peer trading market in such a way that all trading information remains hidden to all parties involved (except the parties owning the data).
-This implementation assumes all parties involved in the billing process fit the honest-but-curious attack-model; all parties follow the protocol, yet are eager to find out private information on the other participants in the trading market.
+This repository provides a proof-of-concept library that acts as a framework for performing privacy-preserving billing in peer-to-peer energy trading markets.
+Additionally, this library contains a default implementation of the [UCS](docs/universal_cost_split.md) [billing model](docs/billing_model.md).
+
+## Documentation
+Documentation for this library can be found [here](docs/docs.md).
 
 ## Installation
 Installation involves the following steps:
@@ -24,10 +26,4 @@ python3 -m venv .env
 git clone git@github.com:3MI-Labs/private-billings.git
 python3 -m pip install -e private-billings
 ```
-
-## Billing model
-Currently, the repository provides support for the Universal Cost Split billing model.
-More information on this model is provided [here](docs/universal_cost_split.md).
-
-## Protocol
-The messaging protocol employed by the application is explained [here](docs/protocol.md).
+and you should be good to go!
