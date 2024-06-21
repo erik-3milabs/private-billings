@@ -11,6 +11,7 @@ Installation involves the following steps:
 1. Install OpenFHE-development, following its [installation procedure](https://openfhe-development.readthedocs.io/en/latest/sphinx_rsts/intro/installation/installation.html).
 
 2. Install OpenFHE-python, following its [installation procedure](https://github.com/openfheorg/openfhe-python/tree/main?tab=readme-ov-file#linux).
+We recommend installing at commit `87700c2c250ff39eaaa5cbe4daed3e5cb5d9b726`; later installations introduce an obscure bug.
 Afterwards, make sure to add the installation file to your PYTHONPATH.
 ```sh
 export PYTHONPATH=/path/to/OPENFHE_so_files:$PYTHONPATH
@@ -27,3 +28,5 @@ git clone git@github.com:3MI-Labs/private-billings.git
 python3 -m pip install -e private-billings
 ```
 and you should be good to go!
+
+More details on the installation may futhermore be derived from the [`Dockerfile`](docker/Dockerfile).
