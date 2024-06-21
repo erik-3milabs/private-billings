@@ -14,8 +14,9 @@ We explain the `core` module using the following figure.
 
 A peer creates a `Data` object containing its prediction and actual consumption/production data.
 Using a `HidingContext`, this data is split into parts (_Split Data_) and hidden (`.hide`), forming a `HiddenData` object, containing both _PRZS masked_ and _FHE encrypted_ data.
-This object can the be `.serialize`d and provided to the `SharedBilling` component, which resides at the _Billing Authority_. Once the `HiddenData` of all included participants is received, as well as a cycle context, the `SharedBilling` can `.compute_bills`.
-As a result, `HiddenBill`s are returned, which can be `.serialize`d and sent back to each peer, who can then `.decrypt`s these to get the final `Bill`.
+This object can the be `.serialize`d, sent over, `.deserialize`d and provided to the `SharedBilling` component, which resides at the _Billing Authority_. Once the Billing Authority has received the `HiddenData` of all network peers, as well as a `CycleContext` object with billing context information, the `SharedBilling` starts to `.compute_bills`.
+It returns `HiddenBill`s as a result, which can be `.serialize`d, sent back to each peer and `.deserialize`d. 
+The peer can then `.decrypt`s their `HiddenBill` to get the final, plain `Bill`.
 
 ## Server
 In this library, a billing network has two types of servers:
@@ -28,7 +29,6 @@ from private_billing import launch_edge, launch_core
 launch_edge(...)
 launch_core(...)
 ```
-or execute `python3 src/launch.py` to use without installation.
 
 ### Talking to a server
 To talk to a server, you only need the following code:
@@ -45,7 +45,6 @@ def send(msg: Message, address: TCPAddress):
         repl = sock.recv()
     return PickleEncoder.decode(repl)
 ```
-Feel free to replace the encoder with an encoder of your liking.
 
 ### Submitting data
 Once the network is up, billing can start.
