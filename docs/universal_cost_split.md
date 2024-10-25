@@ -1,5 +1,5 @@
 # Universal Cost Split
-The Universal Cost Split (UCS) is an instance of a [billing model](billing_model.md) introduced by Madhusudan, Zobiri and Mustafa [1] at ISC2 2022.
+The Universal Cost Split (UCS) is an instance of a [billing model](billing_model.md) introduced by XXXX, XXXX and XXXX [1] at XXXX.
 In UCS, the cost incurred by discrepancies between the auction and utilization phase are uniformly divided among those contributing to the discrepancy.
 That is: if more energy was produced than promised, the excess energy is sold to the energy supplier for the (low) feed-in tarif.
 The loss incurred from not being able to trade for (the higher) trading price, is carried equally among those that produced too much.
@@ -36,4 +36,4 @@ In this library, this billing algorithm is implemented in the [`HiddenData.compu
 This implementation assumes all parties involved in the billing process fit the honest-but-curious attack-model; all parties follow the protocol, yet are eager to find out private information on the other participants in the trading market.
 
 ### Footnotes
-[1] A. Madhusudan, F. Zobiri and M. A. Mustafa, "Billing Models for Peer-to-Peer Electricity Trading Markets with Imperfect Bid-Offer Fulfillment," 2022 IEEE International Smart Cities Conference (ISC2), Pafos, Cyprus, 2022, pp. 1–7, doi: 10.1109/ISC255366.2022.9922530.
+XXXX
